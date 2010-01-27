@@ -38,7 +38,7 @@ window = pyglet.window.Window(*SIZE)
 fps_display = pyglet.clock.ClockDisplay()
 
 
-stream_widget1 = StreamWidget(N_SAMPLES, SIZE)
+stream_widget1 = StreamWidget(N_SAMPLES, SIZE, (50, SIZE[1]/3))
 
 @window.event
 def on_draw():
@@ -70,7 +70,7 @@ def on_key_press(symbol, modifiers):
 
 
 def update(dt):
-    stream_widget1.graph.add_samples([t**3/4.0*random.random() for t in range(-10,11)])
+    stream_widget1.graph.add_samples([t**3/4.0 for t in range(-10,11)])
 
 
 pyglet.clock.schedule_interval(update, 0.1)

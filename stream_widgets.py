@@ -28,17 +28,17 @@ def flatten(listOfLists):
     return list(itertools.chain.from_iterable(listOfLists))
 
 class StreamGraph(object):
-    def __init__(self, n_samples, size, y_position, color=(255,255,255), amplification=1):
+    def __init__(self, n_samples, size, position, color=(255,255,255), amplification=1):
         self.n_samples = n_samples
-        self.samples = [0]*n_samples
+        self.samples = [0] * n_samples
         self.actual_sample_index = 0
         self.width = size[0]
         self.heigth = size[1]
-        self.y_position = y_position
+        self.position = position
         self.color = color
         self.amplification = amplification
         
-        vertexs = flatten([(x*self.width/float(self.n_samples),y_position) for x in range(n_samples)]) # Fixme: Hardcoded initial vertex
+        vertexs = self._vertex_list_from_samples(self.samples) # Fixme: Hardcoded initial vertex
         colors = flatten([self.color for x in range(n_samples)])
         self._vertex_list = pyglet.graphics.vertex_list(n_samples, ('v2f\stream', vertexs), ("c3B\static", colors))
 
@@ -57,8 +57,7 @@ class StreamGraph(object):
         for sample in samples:
             index = self.actual_sample_index
             self.samples[index] = sample
-            new_vertex = (index*self.width/float(self.n_samples), self.y_position + self.samples[index]*self.amplification)
-            self._vertex_list.vertices[index*2:index*2+2] = new_vertex
+            self._vertex_list.vertices[index*2:index*2+2] = self._vertex_from_sample(sample, index)
             self.actual_sample_index +=1
             if self.actual_sample_index >= self.n_samples:
                     self.actual_sample_index = 0
@@ -90,15 +89,22 @@ class StreamGraph(object):
  
     def _regenerate_vertex_list(self):
         "Regenerates the internal vertex list from self.samples data"
-        new_vertex_list = []
+        self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
+
+    def _vertex_list_from_samples(self, samples):
+        vertex_list = []
         for index, sample in enumerate(self.samples):
-            vertex = (index*self.width/float(self.n_samples), self.y_position + self.samples[index]*self.amplification)
-            new_vertex_list.extend(vertex)
-        self._vertex_list.vertices = new_vertex_list
+            vertex_list.extend(self._vertex_from_sample(sample, index))
+        return vertex_list
+
+    def _vertex_from_sample(self, sample, index):
+        x = self.position[0] + index * self.width / float(self.n_samples)
+        y = self.position[1] + self.samples[index] * self.amplification
+        return  x, y
 
 class StreamWidget(object):
-    def __init__(self, n_samples, size):
-        self.graph = StreamGraph(n_samples, size, size[1]/2, (255,0,90))
+    def __init__(self, n_samples, size, position):
+        self.graph = StreamGraph(n_samples, size, position, (255,0,90))
         self.size = size
 
     def draw(self, samples):
