@@ -30,15 +30,17 @@ from pyglet.window import key
 import random, math
 
 
-SIZE = (800, 600)
+SIZE = (1024, 768)
 N_SAMPLES = 350
 
-window = pyglet.window.Window(*SIZE)
+config = pyglet.gl.Config()
+window = pyglet.window.Window(*SIZE, config=config)
 #window.set_vsync(False)
 fps_display = pyglet.clock.ClockDisplay()
 
 
-stream_widget1 = StreamWidget(N_SAMPLES, SIZE, (50, SIZE[1]/3))
+stream_widget1 = StreamWidget(N_SAMPLES, (700,700), (50, 50))
+
 
 @window.event
 def on_draw():

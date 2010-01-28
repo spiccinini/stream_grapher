@@ -27,6 +27,31 @@ import pyglet.graphics
 def flatten(listOfLists):
     return list(itertools.chain.from_iterable(listOfLists))
 
+class Grid(object):
+    def __init__(self, size, position, color=(100,255,100), h_sep=40, v_sep=100):
+        self.size = size
+        self.position = position
+        self.color = color
+        self.h_sep = h_sep
+        self.v_sep = v_sep
+
+        v_center = position[1] + self.size[1]/2       
+        auxs = range(0, size[1]/2+1, v_sep) + range(0,-size[1]/2-1,-v_sep)[1:]
+        num_h_lines = len(auxs)
+        h_vertexs = flatten([(position[0], y + v_center, position[0]+size[0], y + v_center) for y in auxs])
+
+        num_v_lines = size[0]/ h_sep + 1         
+        v_vertexs = flatten([(position[0]+x*h_sep, position[1], position[0]+x*h_sep, position[1]+size[1]) for x in range(num_v_lines)])
+        
+        h_colors = flatten([self.color for x in range(num_h_lines*2)])
+        v_colors = flatten([self.color for x in range(num_v_lines*2)])
+        self.h_vertex_list = pyglet.graphics.vertex_list(num_h_lines*2, ('v2f\static', h_vertexs), ("c3B\static", h_colors))
+        self.v_vertex_list = pyglet.graphics.vertex_list(num_v_lines*2 , ('v2f\static', v_vertexs), ("c3B\static", v_colors))
+        
+    def draw(self):
+        self.h_vertex_list.draw(pyglet.gl.GL_LINES)
+        self.v_vertex_list.draw(pyglet.gl.GL_LINES)
+
 class StreamGraph(object):
     def __init__(self, n_samples, size, position, color=(255,255,255), amplification=1):
         self.n_samples = n_samples
@@ -38,19 +63,25 @@ class StreamGraph(object):
         self.color = color
         self.amplification = amplification
         
-        vertexs = self._vertex_list_from_samples(self.samples) # Fixme: Hardcoded initial vertex
+        vertexs = self._vertex_list_from_samples(self.samples)
         colors = flatten([self.color for x in range(n_samples)])
         self._vertex_list = pyglet.graphics.vertex_list(n_samples, ('v2f\stream', vertexs), ("c3B\static", colors))
+        
+        self.grid = Grid(size, position)
 
     
     def draw(self, samples):
         "Add a list of samples to the graph and then draw it"
         self.add_samples(samples)
+        self.grid.draw()
         self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
+        
 
     def redraw(self):
         "Draw the graph"
+        self.grid.draw()
         self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
+        
 
     def add_samples(self, samples):
         "Add a list of samples to the graph"
@@ -99,7 +130,7 @@ class StreamGraph(object):
 
     def _vertex_from_sample(self, sample, index):
         x = self.position[0] + index * self.width / float(self.n_samples)
-        y = self.position[1] + self.samples[index] * self.amplification
+        y = self.position[1] + self.heigth/2 + self.samples[index] * self.amplification
         return  x, y
 
 class StreamWidget(object):
