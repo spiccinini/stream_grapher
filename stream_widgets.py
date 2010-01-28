@@ -28,7 +28,7 @@ def flatten(listOfLists):
     return list(itertools.chain.from_iterable(listOfLists))
 
 class Grid(object):
-    def __init__(self, size, position, color=(100,255,100), h_sep=40, v_sep=100):
+    def __init__(self, size, position, color=(100,255,100), h_sep=100, v_sep=100):
         self.size = size
         self.position = position
         self.color = color

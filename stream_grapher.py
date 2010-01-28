@@ -33,13 +33,13 @@ import random, math
 SIZE = (1024, 768)
 N_SAMPLES = 350
 
-config = pyglet.gl.Config()
+config = pyglet.gl.Config(double_buffer=True, buffer_size=24)
 window = pyglet.window.Window(*SIZE, config=config)
 #window.set_vsync(False)
 fps_display = pyglet.clock.ClockDisplay()
 
 
-stream_widget1 = StreamWidget(N_SAMPLES, (700,700), (50, 50))
+stream_widget1 = StreamWidget(N_SAMPLES, (600,600), (100, 100))
 
 
 @window.event
