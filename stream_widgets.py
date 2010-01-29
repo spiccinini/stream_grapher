@@ -24,8 +24,14 @@
 import itertools
 import pyglet.graphics
 
+def from_iterable(iterables):
+    # chain.from_iterable(['ABC', 'DEF']) --> A B C D E F
+    for it in iterables:
+        for element in it:
+            yield element
+
 def flatten(listOfLists):
-    return list(itertools.chain.from_iterable(listOfLists))
+    return list(itertools.chain(from_iterable(listOfLists)))
 
 class Grid(object):
     def __init__(self, size, position, color=(100,255,100), h_sep=100, v_sep=100):

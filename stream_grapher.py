@@ -34,7 +34,7 @@ SIZE = (1024, 768)
 N_SAMPLES = 350
 
 config = pyglet.gl.Config(double_buffer=True, buffer_size=24)
-window = pyglet.window.Window(*SIZE, config=config)
+window = pyglet.window.Window(SIZE[0], SIZE[1], config=config)
 #window.set_vsync(False)
 fps_display = pyglet.clock.ClockDisplay()
 
