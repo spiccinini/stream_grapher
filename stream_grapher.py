@@ -25,10 +25,20 @@
 '''
 from stream_widgets import StreamWidget
 
+backend = raw_input("Choose backend: 1 = Spiro,  2 = x^3: ")
+if backend == "1":
+    from backends.spiro_com import Spiro
+    com = "COM" + raw_input("COM port:")
+    spiro = Spiro(port=com, timeout=0.5)
+    spiro.run()
+    backend = "spiro"
+else:
+    backend = "math"
+    
+
 import pyglet
 from pyglet.window import key
 import random, math
-
 
 SIZE = (1024, 768)
 N_SAMPLES = 350
@@ -70,15 +80,16 @@ def on_key_press(symbol, modifiers):
         old_amplification = stream_widget1.graph.amplification
         stream_widget1.graph.set_amplification(old_amplification - old_amplification * 0.4)
 
-from backends.spiro_com import Spiro
-spiro = Spiro(port="COM10", timeout=0.5)
-spiro.run()
+
 
 def update(dt):
-    #stream_widget1.graph.add_samples([t**3/4.0 for t in range(-10,11)])
-    samples = spiro.get_remaining_samples()
-    #print samples, len(samples)
-    stream_widget1.graph.add_samples(samples)
+    if backend == "math":
+        stream_widget1.graph.add_samples([t**3/4.0 for t in range(-10,11)])
+    elif backend == "spiro":
+        samples = spiro.get_remaining_samples()
+        print samples, len(samples)
+        stream_widget1.graph.add_samples(samples)
+        
 
 
 pyglet.clock.schedule_interval(update, 0.05)
