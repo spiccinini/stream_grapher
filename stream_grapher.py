@@ -70,11 +70,17 @@ def on_key_press(symbol, modifiers):
         old_amplification = stream_widget1.graph.amplification
         stream_widget1.graph.set_amplification(old_amplification - old_amplification * 0.4)
 
+from backends.spiro_com import Spiro
+spiro = Spiro(port="COM10", timeout=0.5)
+spiro.run()
 
 def update(dt):
-    stream_widget1.graph.add_samples([t**3/4.0 for t in range(-10,11)])
+    #stream_widget1.graph.add_samples([t**3/4.0 for t in range(-10,11)])
+    samples = spiro.get_remaining_samples()
+    #print samples, len(samples)
+    stream_widget1.graph.add_samples(samples)
 
 
-pyglet.clock.schedule_interval(update, 0.1)
+pyglet.clock.schedule_interval(update, 0.05)
 
 pyglet.app.run()
