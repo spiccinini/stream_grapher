@@ -28,7 +28,7 @@ from stream_widgets import StreamWidget
 backend = raw_input("Choose backend: 1 = Spiro,  2 = x^3: ")
 if backend == "1":
     from backends.spiro_com import Spiro
-    com = "COM" + raw_input("COM port:")
+    com = raw_input("COM port:")
     spiro = Spiro(port=com, timeout=0.5)
     spiro.run()
     backend = "spiro"
