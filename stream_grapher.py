@@ -33,6 +33,9 @@ if backend == "1":
     spiro.run()
     backend = "spiro"
     out_file = open("data.log", "w")
+    from filters.iir_filter import IIRFilter
+    filt_45hz_2nd = IIRFilter((1.0, 2.0, 1.0),(1.0, -1.6692031429, 0.7166338735))
+    
 else:
     backend = "math"
     
@@ -90,7 +93,7 @@ def update(dt):
         samples = spiro.get_remaining_samples()
         print samples, len(samples)
         out_file.write("\n".join([str(sample) for sample in samples])+"\n")
-        stream_widget1.graph.add_samples(samples)
+        stream_widget1.graph.add_samples([filt_45hz_2nd(sample)/90.0 for sample in samples])
         
 
 
