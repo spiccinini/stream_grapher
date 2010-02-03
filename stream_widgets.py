@@ -73,7 +73,15 @@ class StreamGraph(object):
         colors = flatten([self.color for x in range(n_samples)])
         self._vertex_list = pyglet.graphics.vertex_list(n_samples, ('v2f\stream', vertexs), ("c3B\static", colors))
         
-        self.grid = Grid(size, position)
+        self.grid = Grid(size, position, h_sep=100, v_sep=100)
+        
+        self.samples_per_h_division = int(self.n_samples * float(self.grid.h_sep) / float(self.width))
+        self.samples_per_h_division_label = pyglet.text.Label(str(self.samples_per_h_division)+ "/div",
+                          font_size=14, x=size[0]/2.0 + position[0], y=position[1]- 10, anchor_x='center', anchor_y='center')
+                          
+        self.values_per_v_division = int(self.grid.v_sep / float(self.amplification))
+        self.values_per_v_division_label = pyglet.text.Label(str(self.values_per_v_division)+"/div",
+                          font_size=14, x=position[0]-40, y=position[1]+self.heigth/2.0, anchor_x='center', anchor_y='center')
 
     
     def draw(self, samples):
@@ -81,12 +89,15 @@ class StreamGraph(object):
         self.add_samples(samples)
         self.grid.draw()
         self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
-        
+        self.samples_per_h_division_label.draw()
+        self.values_per_v_division_label.draw()
 
     def redraw(self):
         "Draw the graph"
         self.grid.draw()
         self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
+        self.samples_per_h_division_label.draw()
+        self.values_per_v_division_label.draw()
         
 
     def add_samples(self, samples):
@@ -115,10 +126,15 @@ class StreamGraph(object):
         self._regenerate_vertex_list()
         self.set_color(self.color)
         self.actual_sample_index = min(self.actual_sample_index, n_samples-1)
+        
+        self.samples_per_h_division = int(self.n_samples * float(self.grid.h_sep) / float(self.width))
+        self.samples_per_h_division_label.text  = str(self.samples_per_h_division)+"/div"
 
     def set_amplification(self, amplification):
         self.amplification = amplification
         self._regenerate_vertex_list()
+        self.values_per_v_division = int(self.grid.v_sep / float(self.amplification))
+        self.values_per_v_division_label.text = str(self.values_per_v_division)+"/div"
 
     def set_color(self, color):
         colors = tuple(flatten([color for x in range(self.n_samples)])) 
