@@ -32,6 +32,7 @@ if backend == "1":
     spiro = Spiro(port=com, timeout=0.5)
     spiro.run()
     backend = "spiro"
+    out_file = open("data.log", "w")
 else:
     backend = "math"
     
@@ -88,6 +89,7 @@ def update(dt):
     elif backend == "spiro":
         samples = spiro.get_remaining_samples()
         print samples, len(samples)
+        out_file.write("\n".join([str(sample) for sample in samples])+"\n")
         stream_widget1.graph.add_samples(samples)
         
 
