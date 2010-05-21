@@ -23,9 +23,9 @@
 
 ''' A "real-time" stream grapher.
 '''
-from stream_widgets import StreamWidget
+from stream_widgets import StreamWidget,MultipleStreamWidget
 
-backend = raw_input("Choose backend: 1 = Spiro,  2 = x^3: ")
+backend = raw_input("Choose backend: 1 = Spiro,  2 = x^3, 3 = multiple x^3: ")
 if backend == "1":
     from backends.spiro_com import Spiro
     com = raw_input("COM port:")
@@ -36,9 +36,10 @@ if backend == "1":
     from filters.iir_filter import IIRFilter
     filt_45hz_2nd = IIRFilter((1.0, 2.0, 1.0),(1.0, -1.6692031429, 0.7166338735))
     
-else:
+elif backend== "2":
     backend = "math"
-    
+elif backend == "3":
+    backend = "multiple-math"
 
 import pyglet
 from pyglet.window import key
@@ -52,9 +53,16 @@ window = pyglet.window.Window(SIZE[0], SIZE[1], config=config)
 #window.set_vsync(False)
 fps_display = pyglet.clock.ClockDisplay()
 
-
-stream_widget1 = StreamWidget(N_SAMPLES, (600,600), (100, 100))
-
+if backend == "multiple-math":
+    stream_widget1 = MultipleStreamWidget(2, N_SAMPLES, (600,600), (100, 100))
+    stream_widget1.graph[1].color = (0, 0, 255)
+    stream_widget1.graph[1].amplification = 0.5
+    stream_widget1.graph[1].position = (100, 200)
+    
+    stream_widget1.graph[0].amplification = 0.5
+    stream_widget1.graph[0].position = (100, -100)
+else:
+    stream_widget1 = StreamWidget(N_SAMPLES, (600,600), (100, 100))
 
 @window.event
 def on_draw():
@@ -94,8 +102,8 @@ def update(dt):
         print samples, len(samples)
         out_file.write("\n".join([str(sample) for sample in samples])+"\n")
         stream_widget1.graph.add_samples([filt_45hz_2nd(sample)/90.0 for sample in samples])
-        
-
+    elif backend == "multiple-math":
+        stream_widget1.graph.add_samples([[t**3/4.0 for t in range(-10,11)] for i in range(3)])
 
 pyglet.clock.schedule_interval(update, 0.05)
 
