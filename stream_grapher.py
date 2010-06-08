@@ -18,7 +18,7 @@
 
 ''' A "real-time" stream grapher.
 '''
-from stream_widgets import StreamWidget,MultipleStreamWidget
+from stream_widgets import StreamWidget, MultipleStreamWidget, FFTWidget
 
 backend = raw_input("Choose backend: 1 = Spiro,  2 = x^3, 3 = multiple x^3: ")
 if backend == "1":
@@ -30,7 +30,7 @@ if backend == "1":
     out_file = open("data.log", "w")
     from filters.iir_filter import IIRFilter
     filt_45hz_2nd = IIRFilter((1.0, 2.0, 1.0),(1.0, -1.6692031429, 0.7166338735))
-    
+
 elif backend== "2":
     backend = "math"
 elif backend == "3":
@@ -53,16 +53,18 @@ if backend == "multiple-math":
     stream_widget1.graph[1].color = (0, 0, 255)
     stream_widget1.graph[1].amplification = 0.5
     stream_widget1.graph[1].position = (100, 200)
-    
+
     stream_widget1.graph[0].amplification = 0.5
     stream_widget1.graph[0].position = (100, -100)
-else:
-    stream_widget1 = StreamWidget(N_SAMPLES, (600,600), (100, 100))
+elif backend in ["spiro", "math"]:
+    stream_widget1 = StreamWidget(N_SAMPLES, (400,400), (100, 100))
+    fft_widget = FFTWidget(1024*16,1024, (400,400), (550, 100))
 
 @window.event
 def on_draw():
     window.clear()
     stream_widget1.redraw()
+    fft_widget.redraw()
     fps_display.draw()
 
 
@@ -87,11 +89,13 @@ def on_key_press(symbol, modifiers):
         old_amplification = stream_widget1.graph.amplification
         stream_widget1.graph.set_amplification(old_amplification - old_amplification * 0.4)
 
-
-
 def update(dt):
     if backend == "math":
-        stream_widget1.graph.add_samples([t**3/4.0 for t in range(-10,11)])
+        import math
+        stream_widget1.graph.add_samples([1 for t in range(-10,10)])
+        stream_widget1.graph.add_samples([-1 for t in range(-10,10)])
+        fft_widget.graph.add_samples([1 for t in range(-10,80)])
+        fft_widget.graph.add_samples([-1 for t in range(-10,80)])
     elif backend == "spiro":
         samples = spiro.get_remaining_samples()
         print samples, len(samples)

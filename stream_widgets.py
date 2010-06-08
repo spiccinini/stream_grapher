@@ -17,6 +17,7 @@
 
 import itertools
 import pyglet.graphics
+import numpy
 
 def from_iterable(iterables):
     # chain.from_iterable(['ABC', 'DEF']) --> A B C D E F
@@ -167,11 +168,11 @@ class MultipleStreamGraph(object):
                 self.h_sep = 100
                 self.v_sep = 100
             def draw(self): pass
-        
+
         for graph in self.stream_graphs:
             graph.grid = FakeGrid()
-        
-        
+
+
 
     def draw(self, samples_array):
         "Add a list of samples to the graph and then draw it"
@@ -190,6 +191,63 @@ class MultipleStreamGraph(object):
 
     def __getitem__(self, key):
         return self.stream_graphs[key]
+
+class FFTGraph(object):
+    def __init__(self, fft_size, fft_window_size, size, position, color=(255,255,255), amplification=1):
+        self.fft_size = fft_size
+        self.fft_window_size = fft_window_size
+        self.samples = [0] * fft_window_size # For saving incoming samples before compute FFT
+        self.actual_sample_index = 0
+        self.x_axis_len = (fft_size/2+1)  # For rfft only! This function does not compute the negative frequency terms, and the length of the transformed axis of the output is therefore n/2+1
+        self.ffted_data = [0] * self.x_axis_len
+        self.width = size[0]
+        self.heigth = size[1]
+        self.position = position
+        self._color = color
+        self._amplification = amplification
+
+        vertexs = self._vertex_list_from_samples(self.samples)
+        colors = flatten([self._color for x in range(self.x_axis_len)])
+        self._vertex_list = pyglet.graphics.vertex_list(self.x_axis_len, ('v2f\stream', vertexs), ("c3B\static", colors))
+
+    def _vertex_list_from_samples(self, samples):
+        rfft = numpy.fft.rfft(self.samples, self.fft_size)
+        norm_abs_rfft = numpy.abs(rfft) #/ self.fft_size *self.heigth
+        self.ffted_data = norm_abs_rfft
+
+        x_axis = self.position[0] + (numpy.arange(self.fft_size/2+1) * self.width / float(self.x_axis_len))
+        #print len(x_axis), len(self.ffted_data)
+        vertex_list = numpy.column_stack((x_axis, self.ffted_data+self.position[1])).flatten()
+        return vertex_list
+
+    def redraw(self):
+        "Draw the graph"
+        self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
+
+    def add_samples(self, samples):
+        """
+        Add a list of samples to the graph. If acumulated samples are equal or grater than fft_window_size
+        the FFT is calculated, the graph updated and acumulated data cleaned.
+        """
+        #import pdb;pdb.set_trace()
+        if len(samples) + self.actual_sample_index < self.fft_window_size:
+            index = self.actual_sample_index
+            self.samples[index:index+len(samples)] = samples
+            self.actual_sample_index += len(samples)
+        else: # need to compute FFT
+            if len(samples) >= self.fft_window_size:
+                # only need last fft_window_size samples
+                self.samples = samples[-self.fft_window_size:]
+                self.actual_sample_index = 0
+                self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
+            else:
+                for sample in samples:
+                    index = self.actual_sample_index
+                    self.samples[index] = sample
+                    self.actual_sample_index +=1
+                    if self.actual_sample_index >= self.fft_window_size:
+                        self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
+                        self.actual_sample_index = 0
 
 
 class StreamWidget(object):
@@ -222,3 +280,17 @@ class MultipleStreamWidget(object):
     def set_n_samples(self, n_samples):
         "Resize samples per widget"
         self.graph.set_n_samples(n_samples)
+
+class FFTWidget(object):
+    def __init__(self, fft_size, fft_window_size, size, position):
+        self.graph = FFTGraph(fft_size, fft_window_size, size, position, (255,0,90))
+        self.size = size
+
+    def draw(self, samples):
+        raise NotImplementedError
+
+    def redraw(self):
+       self.graph.redraw()
+
+    def set_n_samples(self, n_samples):
+        raise NotImplementedError
