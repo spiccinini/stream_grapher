@@ -218,7 +218,7 @@ class FFTGraph(object):
         self._color = color
         self._amplification = amplification
         self.sample_rate = sample_rate
-        self.h_scale = h_scale
+        self.h_scale = 1.0
         self.h_position = 0.0 # 0.0 to the left, 1.0 to the right
         
         self.grid = Grid(size, position, h_sep=100, v_sep=100)
