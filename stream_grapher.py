@@ -19,6 +19,11 @@
 ''' A "real-time" stream grapher.
 '''
 from stream_widgets import StreamWidget, MultipleStreamWidget, FFTWidget
+import pyglet
+from pyglet.window import key
+from simplui import Frame, Theme, Dialogue, VLayout, Label, Button, \
+                    TextInput, HLayout, FlowLayout, FoldingBox, Slider
+import random, math
 
 backend = raw_input("Choose backend: 1 = Spiro,  2 = x^3, 3 = multiple x^3: ")
 if backend == "1":
@@ -36,16 +41,16 @@ elif backend== "2":
 elif backend == "3":
     backend = "multiple-math"
 
-import pyglet
-from pyglet.window import key
-import random, math
+
 
 SIZE = (1024, 768)
 N_SAMPLES = 350
 
 config = pyglet.gl.Config(double_buffer=True, buffer_size=24)
 window = pyglet.window.Window(SIZE[0], SIZE[1], config=config)
-#window.set_vsync(False)
+
+
+window.set_vsync(False)
 fps_display = pyglet.clock.ClockDisplay()
 
 if backend == "multiple-math":
@@ -58,40 +63,90 @@ if backend == "multiple-math":
     stream_widget1.graph[0].position = (100, -100)
 elif backend in ["spiro", "math"]:
     stream_widget1 = StreamWidget(N_SAMPLES, (400,400), (100, 100))
-    fft_widget = FFTWidget(1024*16,1024, (400,400), (550, 100))
+    fft_widget = FFTWidget(1024, 1024, (400,400), (550, 100))
+
+# create a frame to contain our gui, the full size of our window
+frame = Frame(Theme('themes/pywidget'), w=SIZE[0], h=SIZE[1])
+window.push_handlers(frame)
+
+def show_position(slider):
+    print slider.value
+    
+
+dialogue_control_1= Dialogue('Control 1', x=100, y=700, content=
+    VLayout(hpadding=0, children=[
+        #Label(".                                       ."),
+        FoldingBox('H settings', content=
+            HLayout(children=[
+                Label('sam/div: ', hexpand=False),
+                TextInput(text="", action = lambda x:stream_widget1.graph.set_samples_per_h_division(float(x.text)))
+            ])
+        ),
+        FoldingBox('V settings', content=
+            VLayout(children=[
+                HLayout(children=[
+                    Label('val/div', hexpand=False), 
+                    TextInput(text='100', action = lambda x:stream_widget1.graph.set_values_per_v_division(float(x.text)))
+                ]),
+                HLayout(children=[
+                    Label('position:', halign='right'), 
+                    Slider(w=100, min=0.0, max=1.0, value=0.5, action=lambda x:stream_widget1.graph.set_v_position(x.value)),
+                ])
+                
+            ])
+        )
+    ])
+)
+
+dialogue_control_2= Dialogue('Control 2', x=550, y=700, content=
+    VLayout(hpadding=0, children=[
+        Label(".                                                                        ."),
+        FoldingBox('signal settings', content=
+            VLayout(children=[
+                HLayout(children=[
+                    Label('sample rate: ', hexpand=False),
+                    TextInput(text="1", action = lambda x:fft_widget.graph.set_sample_rate(int(x.text))),
+                    Label('Hz', hexpand=False),
+                ]),
+            ])
+        ),
+        FoldingBox('FFT settings', content=
+            HLayout(children=[
+                HLayout(children=[
+                    Label('window size: ', hexpand=False),
+                    TextInput(text="1024", action = lambda x:fft_widget.graph.set_fft_window_size(int(x.text)))
+                ]),
+                HLayout(children=[
+                    Label('fft size: ', hexpand=False),
+                    TextInput(text="1024", action = lambda x:fft_widget.graph.set_fft_size(int(x.text)))
+                ]),
+                
+            ])
+        ),
+        FoldingBox('V settings', content=
+            VLayout(children=[
+                HLayout(children=[
+                    Label('amplification: ', hexpand=False), 
+                    TextInput(text='1', action = lambda x:fft_widget.graph.set_amplification(float(x.text)))
+                ]),                
+            ])
+        )
+    ])
+)
+
+frame.add(dialogue_control_1)
+frame.add(dialogue_control_2)
 
 @window.event
 def on_draw():
     window.clear()
+    frame.draw()
     stream_widget1.redraw()
     fft_widget.redraw()
     fps_display.draw()
 
-
-@window.event
-def on_mouse_press(x, y, button, modifiers):
-    pass
-
-@window.event
-def on_key_press(symbol, modifiers):
-    if symbol == key.RIGHT: # Increase sample per screen in 20%
-        n_samples = stream_widget1.graph.n_samples
-        stream_widget1.graph.set_n_samples(int(math.ceil(n_samples + n_samples*0.2 )))
-    elif symbol == key.LEFT: # Decrease sample per screen in 20%
-        n_samples = stream_widget1.graph.n_samples
-        new_n_samples = int(n_samples - n_samples*0.2)
-        if new_n_samples > 1:
-            stream_widget1.graph.set_n_samples(new_n_samples)
-    elif symbol == key.UP:
-        old_amplification = stream_widget1.graph.amplification
-        stream_widget1.graph.set_amplification(old_amplification + old_amplification * 0.4)
-    elif symbol == key.DOWN:
-        old_amplification = stream_widget1.graph.amplification
-        stream_widget1.graph.set_amplification(old_amplification - old_amplification * 0.4)
-
 def update(dt):
     if backend == "math":
-        import math
         stream_widget1.graph.add_samples([1 for t in range(-10,10)])
         stream_widget1.graph.add_samples([-1 for t in range(-10,10)])
         fft_widget.graph.add_samples([1 for t in range(-10,80)])
@@ -105,5 +160,10 @@ def update(dt):
         stream_widget1.graph.add_samples([[t**3/4.0 for t in range(-10,11)] for i in range(3)])
 
 pyglet.clock.schedule_interval(update, 0.05)
+
+def update2(dt):
+	pass
+
+pyglet.clock.schedule(update2)
 
 pyglet.app.run()
