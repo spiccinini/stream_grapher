@@ -19,13 +19,14 @@
 ''' A "real-time" stream grapher.
 '''
 from stream_widgets import StreamWidget, MultipleStreamWidget, FFTWidget
+from backends import pyjack
 import pyglet
 from pyglet.window import key
 from simplui import Frame, Theme, Dialogue, VLayout, Label, Button, \
                     TextInput, HLayout, FlowLayout, FoldingBox, Slider
 import random, math
 
-backend = raw_input("Choose backend: 1 = Spiro,  2 = x^3, 3 = multiple x^3: ")
+backend = raw_input("Choose backend: 1 = Spiro,  2 = x^3, 3 = multiple x^3, 4 = jack: ")
 if backend == "1":
     from backends.spiro_com import Spiro
     com = raw_input("COM port:")
@@ -40,6 +41,9 @@ elif backend== "2":
     backend = "math"
 elif backend == "3":
     backend = "multiple-math"
+elif backend == "4":
+    backend = "jack"
+    #jack_backend = pyjack.Jack()
 
 
 
@@ -61,12 +65,13 @@ if backend == "multiple-math":
 
     stream_widget1.graph[0].amplification = 0.5
     stream_widget1.graph[0].position = (100, -100)
-elif backend in ["spiro", "math"]:
-    stream_widget1 = StreamWidget(N_SAMPLES, (400,400), (100, 100))
-    fft_widget = FFTWidget(1024, 1024, (400,400), (550, 100))
+    fft_widget = FFTWidget(1024, 1024, sample_rate=1.0, size=(400,400), position=(550, 100))
+elif backend in ["spiro", "math", "jack"]:
+    stream_widget1 = StreamWidget(N_SAMPLES, size=(400,400), position=(100, 100), color=(255,0,0))
+    fft_widget = FFTWidget(1024, 1024, sample_rate=1.0, size=(400,400), position=(550, 100))
 
 # create a frame to contain our gui, the full size of our window
-frame = Frame(Theme('themes/pywidget'), w=SIZE[0], h=SIZE[1])
+frame = Frame(Theme('/home/san/somecode/stream_grapher_fft/themes/pywidget'), w=SIZE[0], h=SIZE[1])
 window.push_handlers(frame)
 
 def show_position(slider):
@@ -140,9 +145,11 @@ frame.add(dialogue_control_2)
 @window.event
 def on_draw():
     window.clear()
+    if backend != "jack":
+        pass
+    stream_widget1.draw()
     frame.draw()
-    stream_widget1.redraw()
-    fft_widget.redraw()
+    fft_widget.draw()
     fps_display.draw()
 
 def update(dt):
@@ -151,6 +158,10 @@ def update(dt):
         stream_widget1.graph.add_samples([-1 for t in range(-10,10)])
         fft_widget.graph.add_samples([1 for t in range(-10,80)])
         fft_widget.graph.add_samples([-1 for t in range(-10,80)])
+    if backend == "jack":
+        samples = jack_backend.get_remaining_samples()
+        stream_widget1.graph.add_samples(samples)
+        fft_widget.graph.add_samples(samples)
     elif backend == "spiro":
         samples = spiro.get_remaining_samples()
         print samples, len(samples)
@@ -159,11 +170,9 @@ def update(dt):
     elif backend == "multiple-math":
         stream_widget1.graph.add_samples([[t**3/4.0 for t in range(-10,11)] for i in range(3)])
 
-pyglet.clock.schedule_interval(update, 0.05)
+pyglet.clock.schedule(update)
 
-def update2(dt):
-	pass
-
-pyglet.clock.schedule(update2)
+if backend == "jack":
+    jack_backend = pyjack.Jack()
 
 pyglet.app.run()

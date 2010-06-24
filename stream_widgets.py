@@ -300,6 +300,7 @@ class FFTGraph(Graph):
                 self.actual_sample_index = 0
                 self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
             else:
+                # TODO: Speed this with numpy.
                 for sample in samples:
                     index = self.actual_sample_index
                     self.samples[index] = sample
