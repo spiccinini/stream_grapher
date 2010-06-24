@@ -28,14 +28,22 @@ def from_iterable(iterables):
 def flatten(listOfLists):
     return list(itertools.chain(from_iterable(listOfLists)))
 
-class Grid(object):
-    def __init__(self, size, position, color=(100,255,100), h_sep=100, v_sep=100):
+class Graph(object):
+    def __init__(self, size, position, color):
         self.size = size
+        self.width = size[0]
+        self.heigth = size[1]
         self.position = position
         self.color = color
+
+    def draw(self):
+        raise NotImplementedError
+
+class Grid(Graph):
+    def __init__(self, h_sep, v_sep, size, position, color=(100,255,100)):
+        Graph.__init__(self, size, position, color)
         self.h_sep = h_sep
         self.v_sep = v_sep
-
         v_center = position[1] + self.size[1]/2
         auxs = range(0, size[1]/2+1, v_sep) + range(0,-size[1]/2-1,-v_sep)[1:]
         num_h_lines = len(auxs)
@@ -53,23 +61,31 @@ class Grid(object):
         self.h_vertex_list.draw(pyglet.gl.GL_LINES)
         self.v_vertex_list.draw(pyglet.gl.GL_LINES)
 
-class StreamGraph(object):
-    def __init__(self, n_samples, size, position, color=(255,255,255), amplification=1):
+class LinesGraph(Graph):
+    # TODO: All
+    def __init__(self, n_vertexs, size, position, color=(255,255,255)):
+        Graph.__init__(self, size, position, color)
+        self.n_vertex = n_vertex
+        self.vertexs = [0] * n_vertex
+        self.v_position = 0.5 # 0 bottom, 1 top
+        # bla bla bla
+        
+
+class StreamGraph(Graph):
+    def __init__(self, n_samples, size, position, color=(255,255,255)):
+        Graph.__init__(self, size, position, color)
         self.n_samples = n_samples
         self.samples = [0] * n_samples
         self.actual_sample_index = 0
-        self.width = size[0]
-        self.heigth = size[1]
-        self.position = position
         self._color = color
-        self._amplification = amplification
+        self._amplification = 1
         self.v_position = 0.5 # 0 bottom, 1 top
 
-        vertexs = self._vertex_list_from_samples(self.samples)
+        vertexs = self._vertex_list_from_samples_numpy(self.samples)
         colors = flatten([self._color for x in range(n_samples)])
         self._vertex_list = pyglet.graphics.vertex_list(n_samples, ('v2f\stream', vertexs), ("c3B\static", colors))
 
-        self.grid = Grid(size, position, h_sep=100, v_sep=100)
+        self.grid = Grid(h_sep=100, v_sep=100, size=size, position=position)
 
         self.samples_per_h_division = int(self.n_samples * float(self.grid.h_sep) / float(self.width))
         self.samples_per_h_division_label = pyglet.text.Label(str(self.samples_per_h_division)+ "/div",
@@ -79,16 +95,9 @@ class StreamGraph(object):
         self.values_per_v_division_label = pyglet.text.Label(str(self.values_per_v_division)+"/div",
                           font_size=12, x=position[0]-40, y=position[1]+self.heigth/2.0, anchor_x='center', anchor_y='center')
 
+        self.color = StreamGraph.color_property
 
-    def draw(self, samples):
-        "Add a list of samples to the graph and then draw it"
-        self.add_samples(samples)
-        self.grid.draw()
-        self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
-        self.samples_per_h_division_label.draw()
-        self.values_per_v_division_label.draw()
-
-    def redraw(self):
+    def draw(self):
         "Draw the graph"
         self.grid.draw()
         self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
@@ -97,6 +106,7 @@ class StreamGraph(object):
 
     def add_samples(self, samples):
         "Add a list of samples to the graph"
+        # TODO: Speed this with numpy
         for sample in samples:
             index = self.actual_sample_index
             self.samples[index] = sample
@@ -119,7 +129,7 @@ class StreamGraph(object):
         self.samples = new_samples
         self._vertex_list.resize(n_samples)
         self._regenerate_vertex_list()
-        self.set_color(self.color)
+        self.set_color(self._color)
         self.actual_sample_index = min(self.actual_sample_index, n_samples-1)
 
         self.samples_per_h_division = int(self.n_samples * float(self.grid.h_sep) / float(self.width))
@@ -137,7 +147,6 @@ class StreamGraph(object):
 
     def set_values_per_v_division(self, values_per_div):
         self.set_amplification(self.grid.v_sep / float(values_per_div))
-        
 
     def get_amplification(self):
         return self._amplification
@@ -169,9 +178,16 @@ class StreamGraph(object):
         x = self.position[0] + index * self.width / float(self.n_samples)
         y = self.position[1] + (self.heigth * self.v_position) + self.samples[index] * self.amplification
         return  x, y
+        
+    def _vertex_list_from_samples_numpy(self, samples):
+        # TODO: test
+        x_axis = self.position[0] + (numpy.arange(self.n_samples) * self.width / float(self.n_samples))
+        y_axis = numpy.array(samples) * self.amplification + (self.position[1] + (self.heigth * self.v_position))
+        vertex_list = numpy.column_stack((x_axis, y_axis)).flatten()
+        return vertex_list
 
     amplification = property(get_amplification, set_amplification)
-    color = property(get_color, set_color)
+    color_property = property(get_color, set_color)
 
 class MultipleStreamGraph(object):
     def __init__(self, n_graphs, stream_graph_config):
@@ -186,15 +202,9 @@ class MultipleStreamGraph(object):
         for graph in self.stream_graphs:
             graph.grid = FakeGrid()
 
-    def draw(self, samples_array):
-        "Add a list of samples to the graph and then draw it"
-        for i, samples in enumerate(samples_array):
-            self.stream_graphs[i].draw(samples)
-
-    def redraw(self):
-        "Draw the graph"
+    def draw(self):
         for graph in self.stream_graphs:
-            graph.redraw()
+            graph.draw()
 
     def add_samples(self, samples_array):
         "Add a list of samples to each graph"
@@ -204,29 +214,27 @@ class MultipleStreamGraph(object):
     def __getitem__(self, key):
         return self.stream_graphs[key]
 
-class FFTGraph(object):
-    def __init__(self, fft_size, fft_window_size, size, position, color=(255,255,255), amplification=1, sample_rate=1.0):
+class FFTGraph(Graph):
+    def __init__(self, fft_size, fft_window_size, sample_rate, size, position, color=(255,0,0)):
+        Graph.__init__(self, size, position, color)
         self.fft_size = fft_size
         self.fft_window_size = fft_window_size
         self.samples = [0] * fft_window_size # For saving incoming samples before compute FFT
         self.actual_sample_index = 0
         self.x_axis_len = (fft_size/2+1)  # For rfft only! This function does not compute the negative frequency terms, and the length of the transformed axis of the output is therefore n/2+1
         self.ffted_data = [0] * self.x_axis_len
-        self.width = size[0]
-        self.heigth = size[1]
-        self.position = position
         self._color = color
-        self._amplification = amplification
+        self._amplification = 1
         self.sample_rate = sample_rate
         self.h_scale = 1.0
         self.h_position = 0.0 # 0.0 to the left, 1.0 to the right
         
-        self.grid = Grid(size, position, h_sep=100, v_sep=100)
+        self.grid = Grid(h_sep=100, v_sep=100, size=size, position=position)
 
         vertexs = self._vertex_list_from_samples(self.samples)
         colors = flatten([self._color for x in range(self.x_axis_len)])
         self._vertex_list = pyglet.graphics.vertex_list(self.x_axis_len, ('v2f\stream', vertexs), ("c3B\static", colors))
-        
+
         self.freq_per_h_division = self.sample_rate/2 * float(self.grid.h_sep) / float(self.width) * self.h_scale
         self.freq_per_h_division_label = pyglet.text.Label(str(self.freq_per_h_division)+ "Hz/div",
                           font_size=12, x=size[0]/2.0 + position[0], y=position[1]- 10, anchor_x='center', anchor_y='center')
@@ -267,8 +275,7 @@ class FFTGraph(object):
         self.freq_per_h_division_label.text = str(self.freq_per_h_division)+ "Hz/div"
         
 
-    def redraw(self):
-        "Draw the graph"
+    def draw(self):
         self.grid.draw()
         pyglet.gl.glScissor(self.position[0], self.position[1], self.width, self.heigth+1) 
         pyglet.gl.glEnable(pyglet.gl.GL_SCISSOR_TEST) 
@@ -301,17 +308,13 @@ class FFTGraph(object):
                         self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
                         self.actual_sample_index = 0
 
-
 class StreamWidget(object):
-    def __init__(self, n_samples, size, position):
-        self.graph = StreamGraph(n_samples, size, position, (255,0,90))
+    def __init__(self, n_samples, size, position, color):
+        self.graph = StreamGraph(n_samples, size, position, color)
         self.size = size
 
-    def draw(self, samples):
-       self.graph.draw(samples)
-
-    def redraw(self):
-       self.graph.redraw()
+    def draw(self):
+       self.graph.draw()
 
     def set_n_samples(self, n_samples):
         "Resize samples per widget"
@@ -323,11 +326,8 @@ class MultipleStreamWidget(object):
         self.graph = MultipleStreamGraph(n_graphs, (n_samples, size, position, (255,0,90)))
         self.size = size
 
-    def draw(self, samples):
-       self.graph.draw(samples_array)
-
-    def redraw(self):
-       self.graph.redraw()
+    def draw(self):
+       self.graph.draw()
 
     def set_n_samples(self, n_samples):
         "Resize samples per widget"
@@ -335,15 +335,9 @@ class MultipleStreamWidget(object):
 
 
 class FFTWidget(object):
-    def __init__(self, fft_size, fft_window_size, size, position):
-        self.graph = FFTGraph(fft_size, fft_window_size, size, position, (255,0,90))
+    def __init__(self, fft_size, fft_window_size, sample_rate, size, position):
+        self.graph = FFTGraph(fft_size, fft_window_size, sample_rate, size, position, (255,0,90))
         self.size = size
 
-    def draw(self, samples):
-        raise NotImplementedError
-
-    def redraw(self):
-       self.graph.redraw()
-
-    def set_n_samples(self, n_samples):
-        raise NotImplementedError
+    def draw(self):
+       self.graph.draw()
