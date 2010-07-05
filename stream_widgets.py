@@ -18,6 +18,9 @@
 import itertools
 import pyglet.graphics
 import numpy
+from simplui import Frame, Theme, Dialogue, VLayout, Label, Button, \
+                    TextInput, HLayout, FlowLayout, FoldingBox, Slider
+import os
 
 def from_iterable(iterables):
     # chain.from_iterable(['ABC', 'DEF']) --> A B C D E F
@@ -313,9 +316,38 @@ class StreamWidget(object):
     def __init__(self, n_samples, size, position, color):
         self.graph = StreamGraph(n_samples, size, position, color)
         self.size = size
+        self.position = position
+        
+        self.gui_frame = Frame(Theme(os.path.join(".", "themes/pywidget")), w=2000, h=2000)
+        config_gui = Dialogue('Control 1', x=self.position[0], y=self.size[1]+self.position[1]+200, content=
+            VLayout(hpadding=0, children=[
+                #Label(".                                       ."),
+                FoldingBox('H settings', content=
+                    HLayout(children=[
+                        Label('sam/div: ', hexpand=False),
+                        TextInput(text="", action = lambda x:self.graph.set_samples_per_h_division(float(x.text)))
+                    ])
+                ),
+                FoldingBox('V settings', content=
+                    VLayout(children=[
+                        HLayout(children=[
+                            Label('val/div', hexpand=False), 
+                            TextInput(text='100', action = lambda x:self.graph.set_values_per_v_division(float(x.text)))
+                        ]),
+                        HLayout(children=[
+                            Label('position:', halign='right'), 
+                            Slider(w=100, min=0.0, max=1.0, value=0.5, action=lambda x:self.graph.set_v_position(x.value)),
+                        ])
+                        
+                    ])
+                )
+            ])
+        )
+        self.gui_frame.add(config_gui)
 
     def draw(self):
        self.graph.draw()
+       self.gui_frame.draw()
 
     def set_n_samples(self, n_samples):
         "Resize samples per widget"
@@ -339,6 +371,47 @@ class FFTWidget(object):
     def __init__(self, fft_size, fft_window_size, sample_rate, size, position):
         self.graph = FFTGraph(fft_size, fft_window_size, sample_rate, size, position, (255,0,90))
         self.size = size
+        self.position = position
+        self.gui_frame = Frame(Theme(os.path.join(".", "themes/pywidget")), w=2000, h=2000)
+        
+        config_gui = Dialogue('Control 2', x=self.position[0], y=self.size[1]+self.position[1]+200, content=
+            VLayout(hpadding=0, children=[
+                Label(".                                                                        ."),
+                FoldingBox('signal settings', content=
+                    VLayout(children=[
+                        HLayout(children=[
+                            Label('sample rate: ', hexpand=False),
+                            TextInput(text="1", action = lambda x:self.graph.set_sample_rate(int(x.text))),
+                            Label('Hz', hexpand=False),
+                        ]),
+                    ])
+                ),
+                FoldingBox('FFT settings', content=
+                    HLayout(children=[
+                        HLayout(children=[
+                            Label('window size: ', hexpand=False),
+                            TextInput(text="1024", action = lambda x:self.graph.set_fft_window_size(int(x.text)))
+                        ]),
+                        HLayout(children=[
+                            Label('fft size: ', hexpand=False),
+                            TextInput(text="1024", action = lambda x:self.graph.set_fft_size(int(x.text)))
+                        ]),
+                        
+                    ])
+                ),
+                FoldingBox('V settings', content=
+                    VLayout(children=[
+                        HLayout(children=[
+                            Label('amplification: ', hexpand=False), 
+                            TextInput(text='1', action = lambda x:self.graph.set_amplification(float(x.text)))
+                        ]),                
+                    ])
+                )
+            ])
+        )
+        self.gui_frame.add(config_gui)
 
     def draw(self):
        self.graph.draw()
+       self.gui_frame.draw()
+
