@@ -183,7 +183,6 @@ class StreamGraph(Graph):
         return  x, y
         
     def _vertex_list_from_samples_numpy(self, samples):
-        # TODO: test
         x_axis = self.position[0] + (numpy.arange(self.n_samples) * self.width / float(self.n_samples))
         y_axis = numpy.array(samples) * self.amplification + (self.position[1] + (self.heigth * self.v_position))
         vertex_list = numpy.column_stack((x_axis, y_axis)).flatten()
@@ -191,6 +190,31 @@ class StreamGraph(Graph):
 
     amplification = property(get_amplification, set_amplification)
     color_property = property(get_color, set_color)
+
+class BrowsableStreamGraph(StreamGraph):
+    def __init__(self, n_samples, size, position, color=(255,255,255)):
+        StreamGraph.__init__(self, n_samples,size, position, color)
+
+        self.sample_buffer = [0] * n_samples
+        self.first_sample_in_view = 0
+        
+    def draw(self):
+        first = self.first_sample_in_view
+        
+        self._vertex_list.vertices = self._vertex_list_from_samples_numpy(self.sample_buffer[first:first+self.n_samples])
+        self.grid.draw()
+        self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
+        self.samples_per_h_division_label.draw()
+        self.values_per_v_division_label.draw()
+
+    def add_samples(self, samples):
+        self.sample_buffer.extend(samples)
+
+    def set_h_position(self, value):
+        first_sample = int(len(self.sample_buffer)*value)
+        if first_sample + self.n_samples > len(self.sample_buffer):
+            first_sample = len(self.sample_buffer) - self.n_samples
+        self.first_sample_in_view = first_sample
 
 class MultipleStreamGraph(object):
     def __init__(self, n_graphs, stream_graph_config):
@@ -353,6 +377,53 @@ class StreamWidget(object):
         "Resize samples per widget"
         self.graph.set_n_samples(n_samples)
 
+class BrowsableStreamWidget(object):
+    def __init__(self, n_samples, size, position, color):
+        self.graph = BrowsableStreamGraph(n_samples, size, position, color)
+        self.size = size
+        self.position = position
+
+        self.gui_frame = Frame(Theme(os.path.join(".", "themes/pywidget")), w=2000, h=2000) # w, h ?
+        config_gui = Dialogue('Control 1', x=self.position[0], y=self.size[1]+self.position[1]+200, content=
+            VLayout(hpadding=0, children=[
+                #Label(".                                       ."),
+                FoldingBox('H settings', content=
+                    VLayout(children=[
+                        HLayout(children=[
+                            Label('sam/div: ', hexpand=False),
+                            TextInput(text="", action = lambda x:self.graph.set_samples_per_h_division(float(x.text)))
+                        ]),
+                        HLayout(children=[
+                            Label('position:', halign='right'), 
+                            Slider(w=100, min=0.0, max=1.0, value=0., action=lambda x:self.graph.set_h_position(x.value)),
+                        ])
+                    ])
+
+                ),
+                FoldingBox('V settings', content=
+                    VLayout(children=[
+                        HLayout(children=[
+                            Label('val/div', hexpand=False), 
+                            TextInput(text='100', action = lambda x:self.graph.set_values_per_v_division(float(x.text)))
+                        ]),
+                        HLayout(children=[
+                            Label('position:', halign='right'), 
+                            Slider(w=100, min=0.0, max=1.0, value=0.5, action=lambda x:self.graph.set_v_position(x.value)),
+                        ])
+                        
+                    ])
+                )
+            ])
+        )
+        self.gui_frame.add(config_gui)
+
+    def draw(self):
+       self.graph.draw()
+       self.gui_frame.draw()
+
+    def set_n_samples(self, n_samples):
+        "Resize samples per widget"
+        raise NotImplementedError
 
 class MultipleStreamWidget(object):
     def __init__(self, n_graphs, n_samples, size, position):
