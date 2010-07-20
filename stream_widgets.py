@@ -42,6 +42,7 @@ class Graph(object):
     def draw(self):
         raise NotImplementedError
 
+
 class Grid(Graph):
     def __init__(self, h_sep, v_sep, size, position, color=(100,255,100)):
         Graph.__init__(self, size, position, color)
@@ -64,6 +65,7 @@ class Grid(Graph):
         self.h_vertex_list.draw(pyglet.gl.GL_LINES)
         self.v_vertex_list.draw(pyglet.gl.GL_LINES)
 
+
 class LinesGraph(Graph):
     # TODO: All
     def __init__(self, n_vertexs, size, position, color=(255,255,255)):
@@ -72,7 +74,7 @@ class LinesGraph(Graph):
         self.vertexs = [0] * n_vertex
         self.v_position = 0.5 # 0 bottom, 1 top
         # bla bla bla
-        
+
 
 class StreamGraph(Graph):
     def __init__(self, n_samples, size, position, color=(255,255,255)):
@@ -137,10 +139,10 @@ class StreamGraph(Graph):
 
         self.samples_per_h_division = int(self.n_samples * float(self.grid.h_sep) / float(self.width))
         self.samples_per_h_division_label.text  = str(self.samples_per_h_division)+"/div"
-        
+
     def set_samples_per_h_division(self, samples_per_div):
         self.set_n_samples(int(samples_per_div * self.width / self.grid.h_sep))
-        
+
 
     def set_amplification(self, amplification):
         self._amplification = amplification
@@ -165,7 +167,7 @@ class StreamGraph(Graph):
     def set_v_position(self, v_position):
         self.v_position = v_position
         self._regenerate_vertex_list()
-        
+
 
     def _regenerate_vertex_list(self):
         "Regenerates the internal vertex list from self.samples data"
@@ -181,7 +183,7 @@ class StreamGraph(Graph):
         x = self.position[0] + index * self.width / float(self.n_samples)
         y = self.position[1] + (self.heigth * self.v_position) + self.samples[index] * self.amplification
         return  x, y
-        
+
     def _vertex_list_from_samples_numpy(self, samples):
         x_axis = self.position[0] + (numpy.arange(self.n_samples) * self.width / float(self.n_samples))
         y_axis = numpy.array(samples) * self.amplification + (self.position[1] + (self.heigth * self.v_position))
@@ -191,13 +193,14 @@ class StreamGraph(Graph):
     amplification = property(get_amplification, set_amplification)
     color_property = property(get_color, set_color)
 
+
 class BrowsableStreamGraph(StreamGraph):
     def __init__(self, n_samples, size, position, color=(255,255,255)):
         StreamGraph.__init__(self, n_samples,size, position, color)
 
         self.sample_buffer = [0] * n_samples
         self.first_sample_in_view = 0
-        
+
     def draw(self):
         first = self.first_sample_in_view
         samples = self.sample_buffer[first:first+self.n_samples]
@@ -215,6 +218,7 @@ class BrowsableStreamGraph(StreamGraph):
     def set_h_position(self, value):
         first_sample = int(len(self.sample_buffer)*value)
         self.first_sample_in_view = first_sample
+
 
 class MultipleStreamGraph(object):
     def __init__(self, n_graphs, stream_graph_config):
@@ -241,6 +245,7 @@ class MultipleStreamGraph(object):
     def __getitem__(self, key):
         return self.stream_graphs[key]
 
+
 class FFTGraph(Graph):
     def __init__(self, fft_size, fft_window_size, sample_rate, size, position, color=(255,0,0)):
         Graph.__init__(self, size, position, color)
@@ -255,7 +260,7 @@ class FFTGraph(Graph):
         self.sample_rate = sample_rate
         self.h_scale = 1.0
         self.h_position = 0.0 # 0.0 to the left, 1.0 to the right
-        
+
         self.grid = Grid(h_sep=100, v_sep=100, size=size, position=position)
 
         vertexs = self._vertex_list_from_samples(self.samples)
@@ -286,7 +291,7 @@ class FFTGraph(Graph):
         self._vertex_list.resize(self.x_axis_len)
         self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
         self._vertex_list.colors = flatten([self._color for x in range(self.x_axis_len)])
-        
+
     def set_fft_window_size(self, fft_window_size):
         self.fft_window_size = fft_window_size
         self.samples = [0] * fft_window_size
@@ -300,12 +305,12 @@ class FFTGraph(Graph):
         self.sample_rate = sample_rate
         self.freq_per_h_division = self.sample_rate/2 * float(self.grid.h_sep) / float(self.width) * self.h_scale
         self.freq_per_h_division_label.text = str(self.freq_per_h_division)+ "Hz/div"
-        
+
 
     def draw(self):
         self.grid.draw()
-        pyglet.gl.glScissor(self.position[0], self.position[1], self.width, self.heigth+1) 
-        pyglet.gl.glEnable(pyglet.gl.GL_SCISSOR_TEST) 
+        pyglet.gl.glScissor(self.position[0], self.position[1], self.width, self.heigth+1)
+        pyglet.gl.glEnable(pyglet.gl.GL_SCISSOR_TEST)
         self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
         pyglet.gl.glDisable(pyglet.gl.GL_SCISSOR_TEST)
         self.freq_per_h_division_label.draw()
@@ -336,12 +341,13 @@ class FFTGraph(Graph):
                         self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
                         self.actual_sample_index = 0
 
+
 class StreamWidget(object):
     def __init__(self, n_samples, size, position, color):
         self.graph = StreamGraph(n_samples, size, position, color)
         self.size = size
         self.position = position
-        
+
         self.gui_frame = Frame(Theme(os.path.join(".", "themes/pywidget")), w=2000, h=2000)
         config_gui = Dialogue('Control 1', x=self.position[0], y=self.size[1]+self.position[1]+200, content=
             VLayout(hpadding=0, children=[
@@ -355,14 +361,14 @@ class StreamWidget(object):
                 FoldingBox('V settings', content=
                     VLayout(children=[
                         HLayout(children=[
-                            Label('val/div', hexpand=False), 
+                            Label('val/div', hexpand=False),
                             TextInput(text='100', action = lambda x:self.graph.set_values_per_v_division(float(x.text)))
                         ]),
                         HLayout(children=[
-                            Label('position:', halign='right'), 
+                            Label('position:', halign='right'),
                             Slider(w=100, min=0.0, max=1.0, value=0.5, action=lambda x:self.graph.set_v_position(x.value)),
                         ])
-                        
+
                     ])
                 )
             ])
@@ -376,6 +382,7 @@ class StreamWidget(object):
     def set_n_samples(self, n_samples):
         "Resize samples per widget"
         self.graph.set_n_samples(n_samples)
+
 
 class BrowsableStreamWidget(object):
     def __init__(self, n_samples, size, position, color):
@@ -394,7 +401,7 @@ class BrowsableStreamWidget(object):
                             TextInput(text="", action = lambda x:self.graph.set_samples_per_h_division(float(x.text)))
                         ]),
                         HLayout(children=[
-                            Label('position:', halign='right'), 
+                            Label('position:', halign='right'),
                             Slider(w=100, min=0.0, max=1.0, value=0., action=lambda x:self.graph.set_h_position(x.value)),
                         ])
                     ])
@@ -403,14 +410,14 @@ class BrowsableStreamWidget(object):
                 FoldingBox('V settings', content=
                     VLayout(children=[
                         HLayout(children=[
-                            Label('val/div', hexpand=False), 
+                            Label('val/div', hexpand=False),
                             TextInput(text='100', action = lambda x:self.graph.set_values_per_v_division(float(x.text)))
                         ]),
                         HLayout(children=[
-                            Label('position:', halign='right'), 
+                            Label('position:', halign='right'),
                             Slider(w=100, min=0.0, max=1.0, value=0.5, action=lambda x:self.graph.set_v_position(x.value)),
                         ])
-                        
+
                     ])
                 )
             ])
@@ -424,6 +431,7 @@ class BrowsableStreamWidget(object):
     def set_n_samples(self, n_samples):
         "Resize samples per widget"
         raise NotImplementedError
+
 
 class MultipleStreamWidget(object):
     def __init__(self, n_graphs, n_samples, size, position):
@@ -444,7 +452,7 @@ class FFTWidget(object):
         self.size = size
         self.position = position
         self.gui_frame = Frame(Theme(os.path.join(".", "themes/pywidget")), w=2000, h=2000)
-        
+
         config_gui = Dialogue('Control 2', x=self.position[0], y=self.size[1]+self.position[1]+200, content=
             VLayout(hpadding=0, children=[
                 Label(".                                                                        ."),
@@ -467,15 +475,15 @@ class FFTWidget(object):
                             Label('fft size: ', hexpand=False),
                             TextInput(text="1024", action = lambda x:self.graph.set_fft_size(int(x.text)))
                         ]),
-                        
+
                     ])
                 ),
                 FoldingBox('V settings', content=
                     VLayout(children=[
                         HLayout(children=[
-                            Label('amplification: ', hexpand=False), 
+                            Label('amplification: ', hexpand=False),
                             TextInput(text='1', action = lambda x:self.graph.set_amplification(float(x.text)))
-                        ]),                
+                        ]),
                     ])
                 )
             ])

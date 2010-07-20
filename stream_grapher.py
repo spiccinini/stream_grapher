@@ -86,7 +86,7 @@ def update(dt):
                     out_samples = samples
                 # Todo output_ports
                 connection.out.graph.add_samples(out_samples)
-        
+
 pyglet.clock.schedule(update)
 
 pyglet.app.run()
