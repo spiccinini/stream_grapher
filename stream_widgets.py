@@ -200,8 +200,10 @@ class BrowsableStreamGraph(StreamGraph):
         
     def draw(self):
         first = self.first_sample_in_view
-        
-        self._vertex_list.vertices = self._vertex_list_from_samples_numpy(self.sample_buffer[first:first+self.n_samples])
+        samples = self.sample_buffer[first:first+self.n_samples]
+        # fill with zero to the right until n_samples
+        samples.extend([0] * (self.n_samples - len(samples)))
+        self._vertex_list.vertices = self._vertex_list_from_samples_numpy(samples)
         self.grid.draw()
         self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
         self.samples_per_h_division_label.draw()
@@ -212,8 +214,6 @@ class BrowsableStreamGraph(StreamGraph):
 
     def set_h_position(self, value):
         first_sample = int(len(self.sample_buffer)*value)
-        if first_sample + self.n_samples > len(self.sample_buffer):
-            first_sample = len(self.sample_buffer) - self.n_samples
         self.first_sample_in_view = first_sample
 
 class MultipleStreamGraph(object):
