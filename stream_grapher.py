@@ -23,7 +23,7 @@ import pyglet
 from pyglet.window import key
 import random, math, os
 
-SIZE = (1024, 768)
+SIZE = (1024, 700)
 N_SAMPLES = 350
 
 config = pyglet.gl.Config(double_buffer=True, buffer_size=24)
@@ -55,13 +55,13 @@ cubic_generator = Cubic(ports=1, sample_rate=300)
 backends.append(cubic_generator)
 
 stream_widget = StreamWidget(N_SAMPLES, size=(400,400), position=(100, 100), color=(255,0,0))
-#fft_widget = FFTWidget(1024, 1024, sample_rate=300, size=(400,400), position=(550, 100))
+fft_widget = FFTWidget(1024, 1024, sample_rate=300, size=(400,400), position=(550, 100))
 b_stream_widget = BrowsableStreamWidget(N_SAMPLES, size=(400,400), position=(550, 100), color=(255,0,0))
-widgets.extend([stream_widget, b_stream_widget])
+widgets.extend([fft_widget])
 
-PatchBay.connect(src=cubic_generator, src_port=1, out=stream_widget, out_port=1)
-#PatchBay.connect(src=cubic_generator, src_port=1, out=fft_widget, out_port=1)
-PatchBay.connect(src=cubic_generator, src_port=1, out=b_stream_widget, out_port=1)
+#PatchBay.connect(src=cubic_generator, src_port=1, out=stream_widget, out_port=1)
+PatchBay.connect(src=cubic_generator, src_port=1, out=fft_widget, out_port=1)
+#PatchBay.connect(src=cubic_generator, src_port=1, out=b_stream_widget, out_port=1)
 
 
 for widget in widgets:

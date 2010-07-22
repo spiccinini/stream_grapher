@@ -257,8 +257,7 @@ class FFTGraph(Graph):
         Graph.__init__(self, size, position, color)
         self.fft_size = fft_size
         self.fft_window_size = fft_window_size
-        self.samples = [0] * fft_window_size # For saving incoming samples before compute FFT
-        self.actual_sample_index = 0
+        self.samples = CircularBuffer(self.fft_window_size, 0) # For saving incoming samples before compute FFT
         self.x_axis_len = (fft_size/2+1)  # For rfft only! This function does not compute the negative frequency terms, and the length of the transformed axis of the output is therefore n/2+1
         self.ffted_data = [0] * self.x_axis_len
         self._color = color
@@ -293,15 +292,14 @@ class FFTGraph(Graph):
         self.fft_size = fft_size
         self.x_axis_len = (fft_size/2+1)
         self.ffted_data = [0] * self.x_axis_len
-        self.samples = [0] * self.fft_window_size
+        self.samples = CircularBuffer(self.fft_window_size, 0)
         self._vertex_list.resize(self.x_axis_len)
         self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
         self._vertex_list.colors = flatten([self._color for x in range(self.x_axis_len)])
 
     def set_fft_window_size(self, fft_window_size):
         self.fft_window_size = fft_window_size
-        self.samples = [0] * fft_window_size
-        self.actual_sample_index = 0
+        self.samples = CircularBuffer(self.fft_window_size, 0)
         self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
 
     def set_amplification(self, amplification):
@@ -325,26 +323,12 @@ class FFTGraph(Graph):
         Add a list of samples to the graph. If acumulated samples are equal or grater than fft_window_size
         the FFT is calculated, the graph updated and acumulated data cleaned.
         """
-        if len(samples) + self.actual_sample_index < self.fft_window_size:
-            index = self.actual_sample_index
-            self.samples[index:index+len(samples)] = samples
-            self.actual_sample_index += len(samples)
-        else: # need to compute FFT
-            if len(samples) >= self.fft_window_size:
-                # only need last fft_window_size samples
-                self.samples = samples[-self.fft_window_size:]
-                self.actual_sample_index = 0
-                self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
-            else:
-                # TODO: Speed this with numpy.
-                for sample in samples:
-                    index = self.actual_sample_index
-                    self.samples[index] = sample
-                    self.actual_sample_index +=1
-                    if self.actual_sample_index >= self.fft_window_size:
-                        self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
-                        self.actual_sample_index = 0
-
+        need_to_do_FFT = False
+        if len(samples) + self.samples._index >= self.fft_window_size:
+            need_to_do_FFT = True
+        self.samples.put(samples)
+        if need_to_do_FFT:
+            self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
 
 class StreamWidget(object):
     def __init__(self, n_samples, size, position, color):
