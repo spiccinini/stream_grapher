@@ -15,21 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import itertools
+from circular_buffers import CircularBuffer
+from utils import flatten, from_iterable, as_numpy_array
 import pyglet.graphics
 import numpy
 from simplui import Frame, Theme, Dialogue, VLayout, Label, Button, \
                     TextInput, HLayout, FlowLayout, FoldingBox, Slider
 import os
 
-def from_iterable(iterables):
-    # chain.from_iterable(['ABC', 'DEF']) --> A B C D E F
-    for it in iterables:
-        for element in it:
-            yield element
 
-def flatten(listOfLists):
-    return list(itertools.chain(from_iterable(listOfLists)))
 
 class Graph(object):
     def __init__(self, size, position, color):
@@ -80,7 +74,8 @@ class StreamGraph(Graph):
     def __init__(self, n_samples, size, position, color=(255,255,255)):
         Graph.__init__(self, size, position, color)
         self.n_samples = n_samples
-        self.samples = [0] * n_samples
+
+        self.samples = CircularBuffer(n_samples, 0) #[0]*n_samples#
         self.actual_sample_index = 0
         self._color = color
         self._amplification = 1
@@ -109,48 +104,35 @@ class StreamGraph(Graph):
         self.samples_per_h_division_label.draw()
         self.values_per_v_division_label.draw()
 
-    def add_samples(self, samples):
+    def add_samples(self, data):
         "Add a list of samples to the graph"
-        # TODO: Speed this with numpy
-        samples_length = len(samples)
-        if samples_length >= self.n_samples:
-            self._vertex_list.vertices = self._vertex_list_from_samples_numpy(samples[-self.n_samples:])
-            self.actual_sample_index = 0
+        self.samples.put(data)
+        data = numpy.array(data) * self.amplification + (self.position[1] + (self.heigth * self.v_position))
+        nv_y_axis = as_numpy_array(self._vertex_list.vertices)[1::2]
+        if data.size >= self.n_samples:
+            nv_y_axis = data[-self.n_samples:]
+            return
+        til_the_end = self.n_samples - self.actual_sample_index
+        cp_til_the_end = min(til_the_end, data.size)
+        nv_y_axis[self.actual_sample_index:self.actual_sample_index+cp_til_the_end] = data[:cp_til_the_end]
+        copied = cp_til_the_end
+        if copied == data.size:
+            self.actual_sample_index += copied
+            if self.actual_sample_index == self.n_samples:
+                self.actual_sample_index = 0
         else:
-            index = self.actual_sample_index
-            sobrante = samples_length + index - self.n_samples
-            if sobrante > 0:
-                restante = samples_length - sobrante
-            else:
-                restante = samples_length
-            # Copy first part of data
-            #print self.actual_sample_index, self.n_samples
-            #print len(self._vertex_list.vertices[index*2:(index+samples_length)*2]), len(self._vertex_list_from_samples_numpy(samples))
-            self._vertex_list.vertices[index*2:restante*2] = self._vertex_list_from_samples_numpy(samples[:restante])
-            self.actual_sample_index += samples_length
-            if self.actual_sample_index >= self.n_samples:
-                    self.actual_sample_index = 0
-            """
-            for sample in samples:
-            index = self.actual_sample_index
-            self.samples[index] = sample
-            self._vertex_list.vertices[index*2:index*2+2] = self._vertex_from_sample(sample, index)
-            self.actual_sample_index +=1
-            if self.actual_sample_index >= self.n_samples:
-                    self.actual_sample_index = 0
-            """
+            cp_from_the_begining = data.size -copied
+            nv_y_axis[:cp_from_the_begining] = data[copied:]
+            self.actual_sample_index = cp_from_the_begining
 
     def set_n_samples(self, n_samples):
         "Set a new value of n_samples"
         if n_samples <=0:
             raise AttributeError("n_samples must be > 0")
         self.n_samples = n_samples
-        new_samples = [0]*n_samples
-        for i in range(n_samples):
-            try:
-                new_samples[i] = self.samples[i]
-            except IndexError:
-                break
+        new_samples = CircularBuffer(n_samples,0)
+        to_copy = min(self.samples.size, n_samples)
+        new_samples[:to_copy] = self.samples[:to_copy]
         self.samples = new_samples
         self._vertex_list.resize(n_samples)
         self._regenerate_vertex_list()
@@ -162,7 +144,6 @@ class StreamGraph(Graph):
 
     def set_samples_per_h_division(self, samples_per_div):
         self.set_n_samples(int(samples_per_div * self.width / self.grid.h_sep))
-
 
     def set_amplification(self, amplification):
         self._amplification = amplification
@@ -188,10 +169,15 @@ class StreamGraph(Graph):
         self.v_position = v_position
         self._regenerate_vertex_list()
 
-
     def _regenerate_vertex_list(self):
         "Regenerates the internal vertex list from self.samples data"
-        self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
+        self._vertex_list_from_samples_all(self.samples)
+
+    def _vertex_list_from_samples_all(self, samples):
+        nv_x_axis = as_numpy_array(self._vertex_list.vertices)[0::2]
+        nv_y_axis = as_numpy_array(self._vertex_list.vertices)[1::2]
+        nv_x_axis[:] = self.position[0] + (numpy.arange(self.n_samples) * self.width / float(self.n_samples))
+        nv_y_axis[:] = numpy.array(samples) * self.amplification + (self.position[1] + (self.heigth * self.v_position))
 
     def _vertex_list_from_samples(self, samples):
         vertex_list = []
@@ -326,7 +312,6 @@ class FFTGraph(Graph):
         self.freq_per_h_division = self.sample_rate/2 * float(self.grid.h_sep) / float(self.width) * self.h_scale
         self.freq_per_h_division_label.text = str(self.freq_per_h_division)+ "Hz/div"
 
-
     def draw(self):
         self.grid.draw()
         pyglet.gl.glScissor(self.position[0], self.position[1], self.width, self.heigth+1)
@@ -340,7 +325,6 @@ class FFTGraph(Graph):
         Add a list of samples to the graph. If acumulated samples are equal or grater than fft_window_size
         the FFT is calculated, the graph updated and acumulated data cleaned.
         """
-        #import pdb;pdb.set_trace()
         if len(samples) + self.actual_sample_index < self.fft_window_size:
             index = self.actual_sample_index
             self.samples[index:index+len(samples)] = samples

@@ -56,10 +56,12 @@ backends.append(cubic_generator)
 
 stream_widget = StreamWidget(N_SAMPLES, size=(400,400), position=(100, 100), color=(255,0,0))
 #fft_widget = FFTWidget(1024, 1024, sample_rate=300, size=(400,400), position=(550, 100))
-widgets.extend([stream_widget])
+b_stream_widget = BrowsableStreamWidget(N_SAMPLES, size=(400,400), position=(550, 100), color=(255,0,0))
+widgets.extend([stream_widget, b_stream_widget])
 
 PatchBay.connect(src=cubic_generator, src_port=1, out=stream_widget, out_port=1)
 #PatchBay.connect(src=cubic_generator, src_port=1, out=fft_widget, out_port=1)
+PatchBay.connect(src=cubic_generator, src_port=1, out=b_stream_widget, out_port=1)
 
 
 for widget in widgets:
