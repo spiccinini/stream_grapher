@@ -112,13 +112,33 @@ class StreamGraph(Graph):
     def add_samples(self, samples):
         "Add a list of samples to the graph"
         # TODO: Speed this with numpy
-        for sample in samples:
+        samples_length = len(samples)
+        if samples_length >= self.n_samples:
+            self._vertex_list.vertices = self._vertex_list_from_samples_numpy(samples[-self.n_samples:])
+            self.actual_sample_index = 0
+        else:
+            index = self.actual_sample_index
+            sobrante = samples_length + index - self.n_samples
+            if sobrante > 0:
+                restante = samples_length - sobrante
+            else:
+                restante = samples_length
+            # Copy first part of data
+            #print self.actual_sample_index, self.n_samples
+            #print len(self._vertex_list.vertices[index*2:(index+samples_length)*2]), len(self._vertex_list_from_samples_numpy(samples))
+            self._vertex_list.vertices[index*2:restante*2] = self._vertex_list_from_samples_numpy(samples[:restante])
+            self.actual_sample_index += samples_length
+            if self.actual_sample_index >= self.n_samples:
+                    self.actual_sample_index = 0
+            """
+            for sample in samples:
             index = self.actual_sample_index
             self.samples[index] = sample
             self._vertex_list.vertices[index*2:index*2+2] = self._vertex_from_sample(sample, index)
             self.actual_sample_index +=1
             if self.actual_sample_index >= self.n_samples:
                     self.actual_sample_index = 0
+            """
 
     def set_n_samples(self, n_samples):
         "Set a new value of n_samples"
@@ -185,7 +205,7 @@ class StreamGraph(Graph):
         return  x, y
 
     def _vertex_list_from_samples_numpy(self, samples):
-        x_axis = self.position[0] + (numpy.arange(self.n_samples) * self.width / float(self.n_samples))
+        x_axis = self.position[0] + (numpy.arange(self.actual_sample_index, len(samples)+self.actual_sample_index) * self.width / float(self.n_samples))
         y_axis = numpy.array(samples) * self.amplification + (self.position[1] + (self.heigth * self.v_position))
         vertex_list = numpy.column_stack((x_axis, y_axis)).flatten()
         return vertex_list
