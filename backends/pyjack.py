@@ -81,7 +81,7 @@ class Jack(Backend):
 if __name__ == "__main__":
     jack_backend = Jack()
     i = 0
-
     while 1:
-        time.sleep(0.1)
+        time.sleep(0.01)
+        print jack_backend.get_remaining_samples()
 

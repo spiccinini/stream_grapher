@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from circular_buffers import CircularBuffer
-from utils import flatten, from_iterable, as_numpy_array
+from utils import flatten, as_numpy_array
 import pyglet.graphics
 import numpy
 from simplui import Frame, Theme, Dialogue, VLayout, Label, Button, \
@@ -81,7 +81,7 @@ class StreamGraph(Graph):
         self._amplification = 1
         self.v_position = 0.5 # 0 bottom, 1 top
 
-        vertexs = self._vertex_list_from_samples_numpy(self.samples)
+        vertexs = self._vertex_list_from_samples(self.samples)
         colors = flatten([self._color for x in range(n_samples)])
         self._vertex_list = pyglet.graphics.vertex_list(n_samples, ('v2f\stream', vertexs), ("c3B\static", colors))
 
@@ -174,23 +174,13 @@ class StreamGraph(Graph):
         self._vertex_list_from_samples_all(self.samples)
 
     def _vertex_list_from_samples_all(self, samples):
+        "Replace current _vertex_list from samples. Samples must be n_samples length."
         nv_x_axis = as_numpy_array(self._vertex_list.vertices)[0::2]
         nv_y_axis = as_numpy_array(self._vertex_list.vertices)[1::2]
         nv_x_axis[:] = self.position[0] + (numpy.arange(self.n_samples) * self.width / float(self.n_samples))
         nv_y_axis[:] = numpy.array(samples) * self.amplification + (self.position[1] + (self.heigth * self.v_position))
 
     def _vertex_list_from_samples(self, samples):
-        vertex_list = []
-        for index, sample in enumerate(self.samples):
-            vertex_list.extend(self._vertex_from_sample(sample, index))
-        return vertex_list
-
-    def _vertex_from_sample(self, sample, index):
-        x = self.position[0] + index * self.width / float(self.n_samples)
-        y = self.position[1] + (self.heigth * self.v_position) + self.samples[index] * self.amplification
-        return  x, y
-
-    def _vertex_list_from_samples_numpy(self, samples):
         x_axis = self.position[0] + (numpy.arange(self.actual_sample_index, len(samples)+self.actual_sample_index) * self.width / float(self.n_samples))
         y_axis = numpy.array(samples) * self.amplification + (self.position[1] + (self.heigth * self.v_position))
         vertex_list = numpy.column_stack((x_axis, y_axis)).flatten()
@@ -212,7 +202,7 @@ class BrowsableStreamGraph(StreamGraph):
         samples = self.sample_buffer[first:first+self.n_samples]
         # fill with zero to the right until n_samples
         samples.extend([0] * (self.n_samples - len(samples)))
-        self._vertex_list.vertices = self._vertex_list_from_samples_numpy(samples)
+        self._vertex_list.vertices = self._vertex_list_from_samples(samples)
         self.grid.draw()
         self._vertex_list.draw(pyglet.gl.GL_LINE_STRIP)
         self.samples_per_h_division_label.draw()
@@ -258,7 +248,8 @@ class FFTGraph(Graph):
         self.fft_size = fft_size
         self.fft_window_size = fft_window_size
         self.samples = CircularBuffer(self.fft_window_size, 0) # For saving incoming samples before compute FFT
-        self.x_axis_len = (fft_size/2+1)  # For rfft only! This function does not compute the negative frequency terms, and the length of the transformed axis of the output is therefore n/2+1
+        self.x_axis_len = (fft_size/2+1)  # For rfft only! This function does not compute the negative frequency terms,
+                                          # and the length of the transformed axis of the output is therefore n/2+1
         self.ffted_data = [0] * self.x_axis_len
         self._color = color
         self._amplification = 1
@@ -275,10 +266,6 @@ class FFTGraph(Graph):
         self.freq_per_h_division = self.sample_rate/2 * float(self.grid.h_sep) / float(self.width) * self.h_scale
         self.freq_per_h_division_label = pyglet.text.Label(str(self.freq_per_h_division)+ "Hz/div",
                           font_size=12, x=size[0]/2.0 + position[0], y=position[1]- 10, anchor_x='center', anchor_y='center')
-
-        #self.values_per_v_division = int(self.grid.v_sep / float(self._amplification))
-        #self.values_per_v_division_label = pyglet.text.Label(str(self.values_per_v_division)+"/div",
-        #                  font_size=12, x=position[0]-40, y=position[1]+self.heigth/2.0, anchor_x='center', anchor_y='center')
 
     def _vertex_list_from_samples(self, samples):
         rfft = numpy.fft.rfft(self.samples, self.fft_size)

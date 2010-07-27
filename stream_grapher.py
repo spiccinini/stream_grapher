@@ -20,8 +20,7 @@
 '''
 from stream_widgets import StreamWidget, MultipleStreamWidget, FFTWidget, BrowsableStreamWidget
 import pyglet
-from pyglet.window import key
-import random, math, os
+
 
 SIZE = (1024, 700)
 N_SAMPLES = 350
@@ -51,23 +50,23 @@ widgets = []
 
 # Configuration
 from backends.math import Math as Cubic
-cubic_generator = Cubic(ports=1, sample_rate=300)
-backends.append(cubic_generator)
+sample_generator  = Cubic(ports=1, sample_rate=300)
+backends.append(sample_generator)
 
 stream_widget = StreamWidget(N_SAMPLES, size=(400,400), position=(100, 100), color=(255,0,0))
 fft_widget = FFTWidget(1024, 1024, sample_rate=300, size=(400,400), position=(550, 100))
-b_stream_widget = BrowsableStreamWidget(N_SAMPLES, size=(400,400), position=(550, 100), color=(255,0,0))
-widgets.extend([fft_widget])
+b_stream_widget = BrowsableStreamWidget(N_SAMPLES, size=(400,400), position=(100, 100), color=(255,0,0))
+widgets.extend([fft_widget,stream_widget])
 
-#PatchBay.connect(src=cubic_generator, src_port=1, out=stream_widget, out_port=1)
-PatchBay.connect(src=cubic_generator, src_port=1, out=fft_widget, out_port=1)
-#PatchBay.connect(src=cubic_generator, src_port=1, out=b_stream_widget, out_port=1)
+PatchBay.connect(src=sample_generator, src_port=1, out=stream_widget, out_port=1)
+PatchBay.connect(src=sample_generator, src_port=1, out=fft_widget, out_port=1)
+PatchBay.connect(src=sample_generator, src_port=1, out=b_stream_widget, out_port=1)
 
 
 for widget in widgets:
     try:
         window.push_handlers(widget.gui_frame)
-    except AttributeError: # Dows not have GUI
+    except AttributeError: # Does not have GUI
         pass
 
 @window.event
@@ -84,7 +83,7 @@ def update(dt):
             if connection.src is backend:
                 try:
                     out_samples = [sample[connection.src_port] for sample in samples]
-                except TypeError:
+                except (TypeError, IndexError):
                     out_samples = samples
                 # Todo output_ports
                 connection.out.graph.add_samples(out_samples)
