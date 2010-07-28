@@ -1,0 +1,5 @@
+USAGE
+=====
+
+Make a configuration and save to config.py (see config_example.py). 
+In case config.py doesn't exist config_example.py is used.
