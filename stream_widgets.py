@@ -217,26 +217,34 @@ class BrowsableStreamGraph(StreamGraph):
 
 
 class MultipleStreamGraph(object):
-    def __init__(self, n_graphs, stream_graph_config):
+    def __init__(self, n_graphs, stream_graph_configs):
+        colors = stream_graph_configs.pop("colors")
+        self.stream_graphs = [StreamGraph(color=colors[i],**stream_graph_configs) for i in range(n_graphs)]
 
-        self.stream_graphs = [StreamGraph(*stream_graph_config) for i in range(n_graphs)]
         class FakeGrid(object):
             def __init__(self):
                 self.h_sep = 100
                 self.v_sep = 100
             def draw(self): pass
 
-        for graph in self.stream_graphs:
+        for graph in self.stream_graphs[:-1]: # Only need 1 real grid
             graph.grid = FakeGrid()
 
     def draw(self):
         for graph in self.stream_graphs:
             graph.draw()
 
-    def add_samples(self, samples_array):
+    def add_samples(self, samples_array, n_graph=None):
         "Add a list of samples to each graph"
-        for i,graph in enumerate(self.stream_graphs):
-            graph.add_samples(samples_array[i])
+        samples = numpy.asarray(samples_array)
+        if samples.size != 0:
+            if n_graph is not None:
+                self.stream_graphs[n_graph].add_samples(samples)
+            else:
+                samples_array = samples.transpose()
+                for i, graph in enumerate(self.stream_graphs):
+                    graph.add_samples(samples_array[i])
+        
 
     def __getitem__(self, key):
         return self.stream_graphs[key]
@@ -416,8 +424,11 @@ class BrowsableStreamWidget(object):
 
 
 class MultipleStreamWidget(object):
-    def __init__(self, n_graphs, n_samples, size, position):
-        self.graph = MultipleStreamGraph(n_graphs, (n_samples, size, position, (255,0,90)))
+    def __init__(self, n_graphs, n_samples, size, position, colors=None):
+        if not colors:
+            colors = [(255,0,90) for g in range(n_graphs)]
+        cfg = {"n_samples":n_samples, "size":size, "position":position, "colors":colors}
+        self.graph = MultipleStreamGraph(n_graphs, cfg)
         self.size = size
 
     def draw(self):
