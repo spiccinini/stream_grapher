@@ -49,8 +49,10 @@ backends = []
 widgets = []
 
 # Configuration
-from backends.math import Math as Cubic
+from backends.maths import Math as Cubic
+from backends.sthocastic import Brownian
 sample_generator  = Cubic(ports=1, sample_rate=300)
+
 backends.append(sample_generator)
 
 stream_widget = StreamWidget(N_SAMPLES, size=(400,400), position=(100, 100), color=(255,0,0))
