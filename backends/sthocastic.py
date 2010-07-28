@@ -3,7 +3,7 @@ import random
 import threading
 import Queue
 import time
-
+import numpy as np
 
 class RandomWalker(object):
     def __init__(self, min_value=None, max_value=None):
@@ -33,7 +33,7 @@ class BrownianWorker(threading.Thread):
 
     def run(self):
         while True:
-            sample = [walker.next() for walker in self.walkers]
+            sample = np.array([walker.next() for walker in self.walkers])
             self.out_queue.put(sample)
             time.sleep(self.sleep)
 
@@ -51,13 +51,13 @@ class Brownian(Backend):
         samples = []
         while True:
             try:
-                samples.extend(self.out_queue.get_nowait())
+                samples.append(self.out_queue.get_nowait())
             except Queue.Empty:
-                return samples
+                return np.array(samples)
 
 if __name__ == "__main__":
     brown_noise = Brownian(ports=4, sample_rate=100)
-    
+
     while 1:
         time.sleep(0.1)
         print brown_noise.get_remaining_samples()

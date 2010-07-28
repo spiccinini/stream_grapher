@@ -244,7 +244,6 @@ class MultipleStreamGraph(object):
                 samples_array = samples.transpose()
                 for i, graph in enumerate(self.stream_graphs):
                     graph.add_samples(samples_array[i])
-        
 
     def __getitem__(self, key):
         return self.stream_graphs[key]

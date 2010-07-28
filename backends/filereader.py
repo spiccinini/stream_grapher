@@ -35,7 +35,7 @@ class FileReaderWorker(threading.Thread):
             sample = self.parser(line)
             self.out_queue.put(sample)
             time.sleep(self.sleep)
-            
+
     def parser(self, line):
         return [float(x) for x in line.split(",")]
 
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     f.write("123.123, 1398.9998\n 1954454.0, 4953\n")
     f.close()
     filebackend = FileReader(ports=2, sample_rate=100, filename="test.txt")
-    
+
     while 1:
         time.sleep(0.1)
         print filebackend.get_remaining_samples()

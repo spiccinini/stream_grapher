@@ -74,7 +74,7 @@ class Math(Backend):
 
 if __name__ == "__main__":
     backend = Math(ports=1, sample_rate=30)
-    
+
     while 1:
         time.sleep(0.1)
         print backend.get_remaining_samples()
