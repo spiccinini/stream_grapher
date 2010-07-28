@@ -18,54 +18,19 @@
 
 ''' A "real-time" stream grapher.
 '''
-from stream_widgets import StreamWidget, MultipleStreamWidget, FFTWidget, BrowsableStreamWidget
 import pyglet
+import numpy
+from connection import PatchBay
+try:
+    import config
+except ImportError:
+    import config_example as config
 
-
-SIZE = (1024, 700)
-N_SAMPLES = 350
-
-config = pyglet.gl.Config(double_buffer=True, buffer_size=24)
-window = pyglet.window.Window(SIZE[0], SIZE[1], config=config)
-
-
-window.set_vsync(False)
+window_config = pyglet.gl.Config(**config.DISPLAY.pop("gl_config"))
+window = pyglet.window.Window(config=window_config, **config.DISPLAY)
 fps_display = pyglet.clock.ClockDisplay()
 
-class Connection(object):
-    def __init__(self, src, src_port, out, out_port):
-        self.src = src
-        self.src_port = src_port
-        self.out = out
-        self.out_port = out_port
-
-class PatchBay(object):
-    connections = []
-    @classmethod
-    def connect(cls, src, src_port, out, out_port):
-        cls.connections.append(Connection(src, src_port, out, out_port))
-
-backends = []
-widgets = []
-
-# Configuration
-from backends.maths import Math as Cubic
-from backends.sthocastic import Brownian
-sample_generator  = Cubic(ports=1, sample_rate=300)
-
-backends.append(sample_generator)
-
-stream_widget = StreamWidget(N_SAMPLES, size=(400,400), position=(100, 100), color=(255,0,0))
-fft_widget = FFTWidget(1024, 1024, sample_rate=300, size=(400,400), position=(550, 100))
-b_stream_widget = BrowsableStreamWidget(N_SAMPLES, size=(400,400), position=(100, 100), color=(255,0,0))
-widgets.extend([fft_widget,stream_widget])
-
-PatchBay.connect(src=sample_generator, src_port=1, out=stream_widget, out_port=1)
-PatchBay.connect(src=sample_generator, src_port=1, out=fft_widget, out_port=1)
-PatchBay.connect(src=sample_generator, src_port=1, out=b_stream_widget, out_port=1)
-
-
-for widget in widgets:
+for widget in config.widgets:
     try:
         window.push_handlers(widget.gui_frame)
     except AttributeError: # Does not have GUI
@@ -74,21 +39,24 @@ for widget in widgets:
 @window.event
 def on_draw():
     window.clear()
-    for widget in widgets:
+    for widget in config.widgets:
         widget.draw()
     fps_display.draw()
 
 def update(dt):
-    for backend in backends:
+    for backend in config.backends:
         samples = backend.get_remaining_samples()
         for connection in PatchBay.connections:
             if connection.src is backend:
-                try:
-                    out_samples = [sample[connection.src_port] for sample in samples]
-                except (TypeError, IndexError):
+                samples = numpy.asarray(samples)
+                if samples.size != 0:
+                    out_samples = samples.transpose()[connection.src_port-1]
+                else:
                     out_samples = samples
-                # Todo output_ports
-                connection.out.graph.add_samples(out_samples)
+                if connection.out_port:
+                    connection.out.graph.add_samples(out_samples, connection.out_port-1)
+                else:
+                    connection.out.graph.add_samples(out_samples)
 
 pyglet.clock.schedule(update)
 
