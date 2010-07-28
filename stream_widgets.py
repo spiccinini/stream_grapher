@@ -243,13 +243,14 @@ class MultipleStreamGraph(object):
 
 
 class FFTGraph(Graph):
-    def __init__(self, fft_size, fft_window_size, sample_rate, size, position, color=(255,0,0)):
+    def __init__(self, fft_size, fft_window_size, sample_rate, size, position, color=(255,0,0), beans=1):
         Graph.__init__(self, size, position, color)
         self.fft_size = fft_size
         self.fft_window_size = fft_window_size
         self.samples = CircularBuffer(self.fft_window_size, 0) # For saving incoming samples before compute FFT
         self.x_axis_len = (fft_size/2+1)  # For rfft only! This function does not compute the negative frequency terms,
                                           # and the length of the transformed axis of the output is therefore n/2+1
+        self.beans = 1 #beans
         self.ffted_data = [0] * self.x_axis_len
         self._color = color
         self._amplification = 1
@@ -272,6 +273,12 @@ class FFTGraph(Graph):
         norm_abs_rfft = numpy.abs(rfft) * self._amplification
         self.ffted_data = norm_abs_rfft
         x_axis = self.position[0] + (numpy.arange(self.x_axis_len) * self.h_scale * self.width / float(self.x_axis_len))
+        if self.beans > 1:
+            padding = self.ffted_data.size % self.beans
+            aux = self.ffted_data[:-padding]
+            aux.shape = (self.ffted_data.size /self.beans, self.beans)
+            self.ffted_data = numpy.repeat(numpy.mean(aux, 1), self.beans+1)[:self.ffted_data.size]
+
         vertex_list = numpy.column_stack((x_axis, self.ffted_data+self.position[1])).flatten()
         return vertex_list
 
