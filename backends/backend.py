@@ -20,5 +20,11 @@ class Backend(object):
         self.ports = ports
         self.sample_rate = sample_rate
 
+    def start(self):
+        """
+        Called after all machinery is up. Implement only if needed.
+        """
+        pass
+
     def get_remaining_samples(self):
         raise NotImplementedError

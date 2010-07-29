@@ -60,4 +60,11 @@ def update(dt):
 
 pyglet.clock.schedule(update)
 
+# Some backends (eg: pyjack) need initializaction after all machinery is running.
+for backend in config.backends:
+    try:
+        backend.start()
+    except AttributeError:
+        pass
+
 pyglet.app.run()
