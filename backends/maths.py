@@ -42,16 +42,17 @@ class CubicGenerator(MathGenerator):
         self.samples.extend([t**3/4.0 for t in range(-10, 10)])
 
 class MathWorker(threading.Thread):
-    def __init__(self, generator, out_queue, sleep):
+    def __init__(self, generators, out_queue, sleep):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.out_queue = out_queue
         self.sleep = sleep
-        self.generator = generator
+        self.generators = generators
 
     def run(self):
         while True:
-            self.out_queue.put(self.generator.get_samples(1))
+            
+            self.out_queue.put([generator.get_samples(1)[0] for generator in self.generators])
             time.sleep(self.sleep)
 
 class Math(Backend):
@@ -60,20 +61,20 @@ class Math(Backend):
         sleep = 1./sample_rate
         self.out_queue = Queue.Queue()
         self.generator = CubicGenerator()
-        self.worker = MathWorker(CubicGenerator(), self.out_queue, sleep)
+        self.worker = MathWorker([CubicGenerator() for x in range(ports)], self.out_queue, sleep)
         self.worker.start()
 
     def get_remaining_samples(self):
         samples = []
         while True:
             try:
-                samples.extend(self.out_queue.get_nowait())
+                samples.append(self.out_queue.get_nowait())
             except Queue.Empty:
                 return samples
 
 
 if __name__ == "__main__":
-    backend = Math(ports=1, sample_rate=30)
+    backend = Math(ports=5, sample_rate=30)
 
     while 1:
         time.sleep(0.1)

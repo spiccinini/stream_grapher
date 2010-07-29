@@ -53,7 +53,7 @@ class FileReader(Backend):
         samples = []
         while True:
             try:
-                samples.extend(self.out_queue.get_nowait())
+                samples.append(self.out_queue.get_nowait())
             except Queue.Empty:
                 return samples
 

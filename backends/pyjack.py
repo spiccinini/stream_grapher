@@ -20,6 +20,7 @@ import numpy
 import jack
 import threading
 import time
+import sys
 
 class JackWorker(threading.Thread):
     def __init__(self, output, capture, counter, sleep):
@@ -38,23 +39,32 @@ class JackWorker(threading.Thread):
                 self.counter[0] += 1
                 time.sleep(self.sleep)
             except jack.InputSyncError:
-                print "Input Sync Error, samples lost"
+                print >> sys.stderr, "Input Sync Error, samples lost"
             except jack.OutputSyncError:
-                print "Output Sync"
+                print >> sys.stderr, "Output Sync"
 
 class Jack(Backend):
     def __init__(self):
         jack.attach("stream_grapher")
-        jack.register_port("in", jack.IsInput)
+        jack.register_port("in_1", jack.IsInput)
+        jack.register_port("in_2", jack.IsInput)
         jack.activate()
-        jack.connect("system:capture_1", "stream_grapher:in")
-        jack.connect("system:capture_2", "stream_grapher:in")
-        self.buff_size = jack.get_buffer_size()
-        sample_rate = float(jack.get_sample_rate())
+        try:
+            jack.connect("system:capture_1", "stream_grapher:in_1")
+            jack.connect("system:capture_2", "stream_grapher:in_2")
+        except jack.UsageError:
+            pass
+        
+        buff_size = jack.get_buffer_size()
+        if buff_size < 1024:
+            print >> sys.stderr, "Jack buffer size is %d. If you have sync problems try a buff size >= 1024." % (buff_size, )
 
-        Backend.__init__(self, ports=1, sample_rate=sample_rate)
-        self.capture = numpy.zeros((1, self.buff_size), 'f')
-        output = numpy.zeros((1, self.buff_size), 'f')
+        self.buff_size = jack.get_buffer_size()
+        sample_rate = jack.get_sample_rate()
+
+        Backend.__init__(self, ports=2, sample_rate=sample_rate)
+        self.capture = numpy.zeros((2, self.buff_size), 'f')
+        self.output = numpy.zeros((2, self.buff_size), 'f')
 
         self.counter = [0]
         self.last_counter = 0
@@ -63,17 +73,19 @@ class Jack(Backend):
         # R should be at least 1.0
         # To never get InputSyncErrors R should be like 2.0 or higher
         R = 1.2
-        sleep = self.buff_size / float(self.sample_rate) / R
+        self.sleep = self.buff_size / float(self.sample_rate) / R
 
-        self.worker = JackWorker(output, self.capture, self.counter, sleep)
+
+    def start(self):
+        self.worker = JackWorker(self.output, self.capture, self.counter, self.sleep)
         self.worker.start()
 
     def get_remaining_samples(self):
         if self.counter[0] > self.last_counter: # TODO: add a Lock
             if self.counter[0] > self.last_counter + 1:
-                print "Lost at least %d samples" % ((self.counter[0]-self.last_counter -1)*self.buff_size)
+                print >> sys.stderr, "Lost at least %d samples" % ((self.counter[0]-self.last_counter -1)*self.buff_size)
             self.last_counter = self.counter[0]
-            return self.capture[0]
+            return self.capture.T
         else:
             return []
 
