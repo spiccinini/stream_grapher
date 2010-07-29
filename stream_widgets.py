@@ -75,7 +75,7 @@ class StreamGraph(Graph):
         Graph.__init__(self, size, position, color)
         self.n_samples = n_samples
 
-        self.samples = CircularBuffer(n_samples, 0) #[0]*n_samples#
+        self.samples = CircularBuffer(n_samples, 0.) #[0]*n_samples#
         self.actual_sample_index = 0
         self._color = color
         self._amplification = 1
@@ -130,7 +130,7 @@ class StreamGraph(Graph):
         if n_samples <=0:
             raise AttributeError("n_samples must be > 0")
         self.n_samples = n_samples
-        new_samples = CircularBuffer(n_samples,0)
+        new_samples = CircularBuffer(n_samples, 0.)
         to_copy = min(self.samples.size, n_samples)
         new_samples[:to_copy] = self.samples[:to_copy]
         self.samples = new_samples
@@ -254,7 +254,7 @@ class FFTGraph(Graph):
         Graph.__init__(self, size, position, color)
         self.fft_size = fft_size
         self.fft_window_size = fft_window_size
-        self.samples = CircularBuffer(self.fft_window_size, 0) # For saving incoming samples before compute FFT
+        self.samples = CircularBuffer(self.fft_window_size, 0.) # For saving incoming samples before compute FFT
         self.x_axis_len = (fft_size/2+1)  # For rfft only! This function does not compute the negative frequency terms,
                                           # and the length of the transformed axis of the output is therefore n/2+1
         self.beans = 1 #beans
@@ -293,15 +293,18 @@ class FFTGraph(Graph):
         self.fft_size = fft_size
         self.x_axis_len = (fft_size/2+1)
         self.ffted_data = [0] * self.x_axis_len
-        self.samples = CircularBuffer(self.fft_window_size, 0)
+        self.samples = CircularBuffer(self.fft_window_size, 0.)
         self._vertex_list.resize(self.x_axis_len)
         self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
         self._vertex_list.colors = flatten([self._color for x in range(self.x_axis_len)])
 
     def set_fft_window_size(self, fft_window_size):
         self.fft_window_size = fft_window_size
-        self.samples = CircularBuffer(self.fft_window_size, 0)
+        self.samples = CircularBuffer(self.fft_window_size, 0.)
         self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
+
+    def get_amplification(self):
+        return self._amplification
 
     def set_amplification(self, amplification):
         self._amplification = amplification
@@ -330,6 +333,7 @@ class FFTGraph(Graph):
         self.samples.put(samples)
         if need_to_do_FFT:
             self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
+    amplification = property(get_amplification, set_amplification)
 
 class StreamWidget(object):
     def __init__(self, n_samples, size, position, color):
@@ -452,7 +456,7 @@ class FFTWidget(object):
                     VLayout(children=[
                         HLayout(children=[
                             Label('sample rate: ', hexpand=False),
-                            TextInput(text="1", action = lambda x:self.graph.set_sample_rate(int(x.text))),
+                            TextInput(text=str(sample_rate), action = lambda x:self.graph.set_sample_rate(int(x.text))),
                             Label('Hz', hexpand=False),
                         ]),
                     ])
@@ -461,11 +465,11 @@ class FFTWidget(object):
                     HLayout(children=[
                         HLayout(children=[
                             Label('window size: ', hexpand=False),
-                            TextInput(text="1024", action = lambda x:self.graph.set_fft_window_size(int(x.text)))
+                            TextInput(text=str(fft_window_size), action = lambda x:self.graph.set_fft_window_size(int(x.text)))
                         ]),
                         HLayout(children=[
                             Label('fft size: ', hexpand=False),
-                            TextInput(text="1024", action = lambda x:self.graph.set_fft_size(int(x.text)))
+                            TextInput(text=str(fft_size), action = lambda x:self.graph.set_fft_size(int(x.text)))
                         ]),
 
                     ])
