@@ -16,9 +16,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class Backend(object):
-    def __init__(self, ports=1, sample_rate=1.0):
+    def __init__(self, ports=1, sample_rate=1.0, y_axis_magnitude="mV"):
         self.ports = ports
         self.sample_rate = sample_rate
+        self.y_axis_magnitude = y_axis_magnitude # a sample of value 1 must
+                                                 # equival to the magnitude
 
     def start(self):
         """
