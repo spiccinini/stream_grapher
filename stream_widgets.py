@@ -452,15 +452,15 @@ class FFTWidget(object):
         config_gui = Dialogue('Control 2', x=self.position[0], y=self.size[1]+self.position[1]+200, content=
             VLayout(hpadding=0, children=[
                 Label(".                                                                        ."),
-                FoldingBox('signal settings', content=
-                    VLayout(children=[
-                        HLayout(children=[
-                            Label('sample rate: ', hexpand=False),
-                            TextInput(text=str(sample_rate), action = lambda x:self.graph.set_sample_rate(int(x.text))),
-                            Label('Hz', hexpand=False),
-                        ]),
-                    ])
-                ),
+            #    FoldingBox('signal settings', content=
+            #        VLayout(children=[
+            #            HLayout(children=[
+            #                Label('sample rate: ', hexpand=False),
+            #                TextInput(text=str(sample_rate), action = lambda x:self.graph.set_sample_rate(int(x.text))),
+            #                Label('Hz', hexpand=False),
+            #            ]),
+            #        ])
+            #    ),
                 FoldingBox('FFT settings', content=
                     HLayout(children=[
                         HLayout(children=[
