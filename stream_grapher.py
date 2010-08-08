@@ -20,11 +20,15 @@
 '''
 import pyglet
 import numpy
+import sys
 from connection import PatchBay
+
 try:
-    import config
-except ImportError:
-    import config_example as config
+    f = open("config.py", "r")
+except IOError:
+    print >> sys.stderr, "You must write a config.py. See the README."
+
+import config
 
 window_config = pyglet.gl.Config(**config.DISPLAY.pop("gl_config"))
 window = pyglet.window.Window(config=window_config, **config.DISPLAY)
