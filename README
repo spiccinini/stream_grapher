@@ -1,5 +1,67 @@
+Stream Grapher
+=============
+
+It's a tool to visualize data streams or signals in real time. It can draw the 
+streams in different ways from oscilloscope views to frequency domain graphs.
+
+It's intended use is in development and prototyping of hardware or software
+that generates some kind of signal to visualize in 2D. It's also useful to
+test software filters.
+
+The most important parts of Stream Grapher are backends and widgets.
+A backend generates samples or get the samples from external hardware and pass
+them to the widgets. The widgets only graph the samples.
+
+Backends
+--------
+* File Reader (filereader.py): Read samples from a comma separated text file.
+* Math functions (maths.py): Generates math functions.
+* JACK audio (pyjack.py): Provides a JACK client.
+* Sthocastic processes (sthocastic.py): Generates sthocastic streams.
+* Spiro COM (spiro_com.py: Read samples from Serial COM port.
+
+Widgets
+-------
+* StreamWidget: It's an oscilloscope for only one stream.
+* MultipleStreamWidget: It's an oscilloscope that draws multiple streams.
+* MultipleStreamWidget: It's an oscilloscope that draws multiple streams.
+* BrowsableStreamWidget: It's a widget that let you move in the x axis along all the
+signal.
+* FFTWidget: Draws the FFT of the input stream.
+
 USAGE
 =====
 
-Make a configuration and save to config.py (see config_example.py). 
-In case config.py doesn't exist config_example.py is used.
+To use stream_grapher you must a configuration and save it to config.py (see 
+config_example.py) in the same direcory of stream_grapher.py.
+
+Audio
+-----
+Stream grapher provides a JACK backend to get the audio samples, so you must have
+jack and pyjack installed in order to use it. Take a look to config_jack.py to
+write your custom config.py.
+
+JACK: http://jackaudio.org/
+PyJack: http://sourceforge.net/projects/py-jack/
+
+
+
+Custom backend (graph your own hardware or software streams)
+--------------
+To use stream_grapher with your hardware or software you must write a backend 
+that gets the samples and pass them to the graphs. It should be very easy in 
+most cases and there are a lot of examples in backends directory.
+Take a look to spiro_com that receives samples from the serial port.
+
+
+Digital filter development
+--------------------------
+
+TODO
+
+
+
+License
+=======
+
+GPLv3 (see COPYNG)
