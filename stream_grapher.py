@@ -27,7 +27,7 @@ try:
     f = open("config.py", "r")
 except IOError:
     print >> sys.stderr, "You must write a config.py. See the README."
-
+    sys.exit(1)
 import config
 
 window_config = pyglet.gl.Config(**config.DISPLAY.pop("gl_config"))
