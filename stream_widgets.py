@@ -19,6 +19,7 @@ from circular_buffers import CircularBuffer
 from utils import flatten, as_numpy_array
 import pyglet.graphics
 import numpy
+from pyglet import gl
 from simplui import Frame, Theme, Dialogue, VLayout, Label, Button, \
                     TextInput, HLayout, FlowLayout, FoldingBox, Slider
 import os
@@ -38,27 +39,38 @@ class Graph(object):
 
 
 class Grid(Graph):
-    def __init__(self, h_sep, v_sep, size, position, color=(100,255,100)):
+    def __init__(self, h_lines, v_lines, size, position, color=(100,255,100)):
         Graph.__init__(self, size, position, color)
-        self.h_sep = h_sep
+        self.h_lines = h_lines
+        self.v_lines = v_lines
+        h_colors = flatten([self.color for x in range(h_lines*2)])
+        v_colors = flatten([self.color for x in range(v_lines*2)])
+        v_sep = size[0]/float(v_lines)
+        h_sep = size[1]/float(h_lines)
         self.v_sep = v_sep
-        v_center = position[1] + self.size[1]/2
-        auxs = range(0, size[1]/2+1, v_sep) + range(0,-size[1]/2-1,-v_sep)[1:]
-        num_h_lines = len(auxs)
-        h_vertexs = flatten([(position[0], y + v_center, position[0]+size[0], y + v_center) for y in auxs])
+        self.h_sep = h_sep
+        v_vertexs = flatten([(position[0] + i*v_sep, position[1], position[0] + i*v_sep, position[1]+size[1]) for i in range(1, v_lines+1)])
 
-        num_v_lines = size[0]/ h_sep + 1
-        v_vertexs = flatten([(position[0]+x*h_sep, position[1], position[0]+x*h_sep, position[1]+size[1]) for x in range(num_v_lines)])
+        h_vertexs = flatten([(position[0], position[1] + i*h_sep, position[0]+size[0], position[1] + i*h_sep) for i in range(1, h_lines+1)])
 
-        h_colors = flatten([self.color for x in range(num_h_lines*2)])
-        v_colors = flatten([self.color for x in range(num_v_lines*2)])
-        self.h_vertex_list = pyglet.graphics.vertex_list(num_h_lines*2, ('v2f\static', h_vertexs), ("c3B\static", h_colors))
-        self.v_vertex_list = pyglet.graphics.vertex_list(num_v_lines*2 , ('v2f\static', v_vertexs), ("c3B\static", v_colors))
+        self.h_vertex_list = pyglet.graphics.vertex_list(h_lines*2, ('v2f\static', h_vertexs), ("c3B\static", h_colors))
+        self.v_vertex_list = pyglet.graphics.vertex_list(v_lines*2 , ('v2f\static', v_vertexs), ("c3B\static", v_colors))
+        border_vertexs = (
+            self.position[0], self.position[1],
+            self.position[0]+self.size[0], self.position[1],
+            self.position[0]+self.size[0], self.position[1]+self.size[1],
+            self.position[0],self.position[1]+self.size[1],
+        )
+        border_colors = flatten([self.color for x in range(4)])
+        self.border_vertex_list = pyglet.graphics.vertex_list(4 , ('v2f\static', border_vertexs), ("c3B\static", border_colors))
 
     def draw(self):
+        pyglet.gl.glLineStipple(1,1)
+        pyglet.gl.glEnable(pyglet.gl.GL_LINE_STIPPLE)
         self.h_vertex_list.draw(pyglet.gl.GL_LINES)
         self.v_vertex_list.draw(pyglet.gl.GL_LINES)
-
+        pyglet.gl.glDisable(pyglet.gl.GL_LINE_STIPPLE)
+        self.border_vertex_list.draw(pyglet.gl.GL_LINE_LOOP)
 
 class LinesGraph(Graph):
     # TODO: All
@@ -85,9 +97,9 @@ class StreamGraph(Graph):
         colors = flatten([self._color for x in range(n_samples)])
         self._vertex_list = pyglet.graphics.vertex_list(n_samples, ('v2f\stream', vertexs), ("c3B\static", colors))
 
-        self.grid = Grid(h_sep=100, v_sep=100, size=size, position=position)
+        self.grid = Grid(h_lines=5, v_lines=5, size=size, position=position)
 
-        self.samples_per_h_division = int(self.n_samples * float(self.grid.h_sep) / float(self.width))
+        self.samples_per_h_division = int(self.n_samples / float(self.grid.h_lines))
         self.samples_per_h_division_label = pyglet.text.Label(str(self.samples_per_h_division)+ "/div",
                           font_size=12, x=size[0]/2.0 + position[0], y=position[1]- 10, anchor_x='center', anchor_y='center')
 
@@ -138,12 +150,11 @@ class StreamGraph(Graph):
         self._regenerate_vertex_list()
         self.set_color(self._color)
         self.actual_sample_index = min(self.actual_sample_index, n_samples-1)
-
-        self.samples_per_h_division = int(self.n_samples * float(self.grid.h_sep) / float(self.width))
+        self.samples_per_h_division = int(self.n_samples / float(self.grid.h_lines))
         self.samples_per_h_division_label.text  = str(self.samples_per_h_division)+"/div"
 
     def set_samples_per_h_division(self, samples_per_div):
-        self.set_n_samples(int(samples_per_div * self.width / self.grid.h_sep))
+        self.set_n_samples(int(samples_per_div * self.grid.h_lines))
 
     def set_amplification(self, amplification):
         self._amplification = amplification
