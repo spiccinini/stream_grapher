@@ -43,6 +43,8 @@ for widget in config.widgets:
 @window.event
 def on_draw():
     window.clear()
+    pyglet.gl.glMatrixMode(pyglet.gl.GL_MODELVIEW)
+    pyglet.gl.glLoadIdentity()
     for widget in config.widgets:
         widget.draw()
     fps_display.draw()
