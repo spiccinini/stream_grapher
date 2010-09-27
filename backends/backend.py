@@ -28,5 +28,11 @@ class Backend(object):
         """
         pass
 
+    def stop(self):
+        """
+        Called before exit. Implement only if needed.
+        """
+        pass
+
     def get_remaining_samples(self):
         raise NotImplementedError

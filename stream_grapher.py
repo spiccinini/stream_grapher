@@ -50,6 +50,19 @@ def on_draw():
         widget.draw()
     fps_display.draw()
 
+
+event_loop = pyglet.app.EventLoop()
+@event_loop.event
+def on_exit():
+    for backend in config.backends:
+        try:
+            backend.stop()
+        except AttributeError:
+            pass
+
+    event_loop.exit()
+
+
 def update(dt):
     for backend in config.backends:
         samples = backend.get_remaining_samples()
@@ -74,4 +87,4 @@ for backend in config.backends:
     except AttributeError:
         pass
 
-pyglet.app.run()
+event_loop.run()
