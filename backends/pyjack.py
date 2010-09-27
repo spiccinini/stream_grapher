@@ -22,36 +22,67 @@ import threading
 import time
 import sys
 
+import scipy.signal
+import numpy
+
+class Filter(object):
+    def __init__(self):
+        self.b, self.a = scipy.signal.iirdesign(wp = 0.05, ws = 0.2, gpass=1, gstop=40)
+        self.initial_conditions = numpy.zeros(max(len(self.a),len(self.b))-1)
+
+    def do_filter(self, data):
+        filtered_data, self.initial_conditions = scipy.signal.lfilter(self.b, self.a, data, zi=self.initial_conditions)
+        return filtered_data
+
+filtro = Filter()
+
 class JackWorker(threading.Thread):
-    def __init__(self, output, capture, counter, sleep):
+    def __init__(self, output, capture, counter, sleep, nonstop_event):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.output = output
         self.capture = capture
         self.counter = counter
         self.sleep = sleep
+        self.nonstop_event = nonstop_event
 
     def run(self):
-        while True:
+        while self.nonstop_event.isSet():
             try:
                 # TODO: add a Lock
                 jack.process(self.output, self.capture)
+                self.capture[0] = filtro.do_filter(self.capture[0])
+                self.capture[1] = filtro.do_filter(self.capture[1])
+                self.output = self.capture
                 self.counter[0] += 1
                 time.sleep(self.sleep)
             except jack.InputSyncError:
                 print >> sys.stderr, "Input Sync Error, samples lost"
             except jack.OutputSyncError:
                 print >> sys.stderr, "Output Sync"
+        # Workarround to put output buffer to zero. If not for some reason
+        # jackd will constantly output the last buffer, making noise
+        self.output = self.output*0
+        jack.process(self.output, self.capture)
+        time.sleep(0.2) # "Waiting" the jack thread to sync.
+        jack.deactivate()
+        jack.detach()
+        self.nonstop_event.set()
 
 class Jack(Backend):
     def __init__(self):
         jack.attach("stream_grapher")
         jack.register_port("in_1", jack.IsInput)
         jack.register_port("in_2", jack.IsInput)
+        jack.register_port("out_1", jack.IsOutput)
+        jack.register_port("out_2", jack.IsOutput)
+
         jack.activate()
         try:
             jack.connect("system:capture_1", "stream_grapher:in_1")
             jack.connect("system:capture_2", "stream_grapher:in_2")
+            jack.connect("stream_grapher:out_1", "system:playback_1")
+            jack.connect("stream_grapher:out_2", "system:playback_2")
         except jack.UsageError:
             pass
         
@@ -74,12 +105,16 @@ class Jack(Backend):
         # To never get InputSyncErrors R should be like 2.0 or higher
         R = 1.2
         self.sleep = self.buff_size / float(self.sample_rate) / R
-    def __del__(self):
-        jack.deactivate()
-        jack.detach()
+
+    def stop(self):
+        # Kill the worker thread nicely.
+        self.worker_corriendo.clear()
+        self.worker_corriendo.wait()
 
     def start(self):
-        self.worker = JackWorker(self.output, self.capture, self.counter, self.sleep)
+        self.worker_corriendo = threading.Event()
+        self.worker_corriendo.set()
+        self.worker = JackWorker(self.output, self.capture, self.counter, self.sleep, self.worker_corriendo)
         self.worker.start()
 
     def get_remaining_samples(self):
