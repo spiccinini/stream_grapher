@@ -74,16 +74,6 @@ class Grid(Graph):
         gl.glPopMatrix()
 
 
-class LinesGraph(Graph):
-    # TODO: All
-    def __init__(self, n_vertexs, size, position, color=(255,255,255)):
-        Graph.__init__(self, size, position, color)
-        self.n_vertex = n_vertex
-        self.vertexs = [0] * n_vertex
-        self.v_position = 0.5 # 0 bottom, 1 top
-        # bla bla bla
-
-
 class StreamGraph(Graph):
     def __init__(self, n_samples, size, position, color=(255,255,255)):
         Graph.__init__(self, size, position, color)
