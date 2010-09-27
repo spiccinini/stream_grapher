@@ -19,6 +19,7 @@ from circular_buffers import CircularBuffer
 from utils import flatten, as_numpy_array
 import pyglet.graphics
 import numpy
+import scipy.signal
 from pyglet import gl
 from simplui import Frame, Theme, Dialogue, VLayout, Label, Button, \
                     TextInput, HLayout, FlowLayout, FoldingBox, Slider
@@ -265,7 +266,7 @@ class MultipleStreamGraph(object):
 
 
 class FFTGraph(Graph):
-    def __init__(self, fft_size, fft_window_size, sample_rate, size, position, color=(255,0,0), beans=1):
+    def __init__(self, fft_size, fft_window_size, sample_rate, size, position, color=(255,0,0), window_type="boxcar"):
         Graph.__init__(self, size, position, color)
         self.fft_size = fft_size
         self.fft_window_size = fft_window_size
@@ -274,6 +275,8 @@ class FFTGraph(Graph):
                                           # and the length of the transformed axis of the output is therefore n/2+1
         self.beans = 1 #beans
         self.ffted_data = [0] * self.x_axis_len
+        self.window_type = window_type
+        self.window = scipy.signal.get_window(self.window_type, self.fft_window_size)
         self._color = color
         self._amplification = 1
         self.sample_rate = sample_rate
@@ -282,7 +285,7 @@ class FFTGraph(Graph):
 
         self.grid = Grid(h_lines=4, v_lines=4, size=size, position=position)
 
-        vertexs = self._vertex_list_from_samples(self.samples)
+        vertexs = [0,0]*self.x_axis_len
         colors = flatten([self._color for x in range(self.x_axis_len)])
         self._vertex_list = pyglet.graphics.vertex_list(self.x_axis_len, ('v2f\stream', vertexs), ("c3B\static", colors))
 
@@ -290,39 +293,45 @@ class FFTGraph(Graph):
         self.freq_per_h_division_label = pyglet.text.Label(str(self.freq_per_h_division)+ "Hz/div",
                           font_size=12, x=size[0]/2.0 + position[0], y=position[1]- 10, anchor_x='center', anchor_y='center')
 
-    def _vertex_list_from_samples(self, samples):
-        rfft = numpy.fft.rfft(self.samples, self.fft_size)
-        norm_abs_rfft = numpy.abs(rfft) * self._amplification
-        self.ffted_data = norm_abs_rfft
-        x_axis = numpy.arange(self.x_axis_len) * self.h_scale * self.width / float(self.x_axis_len)
-        if self.beans > 1:
-            padding = self.ffted_data.size % self.beans
-            aux = self.ffted_data[:-padding]
-            aux.shape = (self.ffted_data.size /self.beans, self.beans)
-            self.ffted_data = numpy.repeat(numpy.mean(aux, 1), self.beans+1)[:self.ffted_data.size]
+    def do_fft(self, samples):
+        rfft = numpy.fft.rfft(self.samples*self.window, self.fft_size)
+        ffted_data = numpy.abs(rfft) * self._amplification
+        return ffted_data
 
-        vertex_list = numpy.column_stack((x_axis, self.ffted_data)).flatten()
+    def _vertex_list_from_ffted_data(self, ffted_data):
+        x_axis = numpy.arange(self.x_axis_len) * self.h_scale * self.width / float(self.x_axis_len)
+        vertex_list = numpy.column_stack((x_axis, ffted_data)).flatten()
         return vertex_list
+
+    def regenerate_graph(self):
+        "Update graph from self.samples doing fft."
+        ffted_data = self.do_fft(self.samples)
+        self._vertex_list.vertices = self._vertex_list_from_ffted_data(ffted_data)
+        self._vertex_list.colors = flatten([self._color for x in range(self.x_axis_len)])
 
     def set_fft_size(self, fft_size):
         self.fft_size = fft_size
         self.x_axis_len = (fft_size/2+1)
-        self.ffted_data = [0] * self.x_axis_len
         self.samples = CircularBuffer(self.fft_window_size, 0.)
         self._vertex_list.resize(self.x_axis_len)
-        self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
-        self._vertex_list.colors = flatten([self._color for x in range(self.x_axis_len)])
+        self.regenerate_graph()
 
     def set_fft_window_size(self, fft_window_size):
         self.fft_window_size = fft_window_size
+        self.window = scipy.signal.get_window(self.window_type, self.fft_window_size)
         self.samples = CircularBuffer(self.fft_window_size, 0.)
-        self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
+        self.regenerate_graph()
+
+    def set_window_type(self, window_type):
+        self.window = scipy.signal.get_window(self.window_type, self.fft_window_size)
+        self.regenerate_graph()
 
     def get_amplification(self):
         return self._amplification
 
     def set_amplification(self, amplification):
         self._amplification = amplification
+        self.regenerate_graph()
 
     def set_sample_rate(self, sample_rate):
         self.sample_rate = sample_rate
@@ -350,7 +359,8 @@ class FFTGraph(Graph):
             need_to_do_FFT = True
         self.samples.put(samples)
         if need_to_do_FFT:
-            self._vertex_list.vertices = self._vertex_list_from_samples(self.samples)
+            self.regenerate_graph()
+
     amplification = property(get_amplification, set_amplification)
 
 class StreamWidget(object):
