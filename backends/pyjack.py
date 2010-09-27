@@ -74,7 +74,9 @@ class Jack(Backend):
         # To never get InputSyncErrors R should be like 2.0 or higher
         R = 1.2
         self.sleep = self.buff_size / float(self.sample_rate) / R
-
+    def __del__(self):
+        jack.deactivate()
+        jack.detach()
 
     def start(self):
         self.worker = JackWorker(self.output, self.capture, self.counter, self.sleep)
