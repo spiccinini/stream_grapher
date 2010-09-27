@@ -42,16 +42,16 @@ class Grid(Graph):
         Graph.__init__(self, size, position, color)
         self.h_lines = h_lines
         self.v_lines = v_lines
-        h_colors = flatten([self.color for x in range(h_lines*2)])
-        v_colors = flatten([self.color for x in range(v_lines*2)])
+        h_colors = flatten([self.color+(80, ) for x in range(h_lines*2)])
+        v_colors = flatten([self.color+(80, ) for x in range(v_lines*2)])
         v_sep = size[0]/float(v_lines+1)
         h_sep = size[1]/float(h_lines+1)
         self.v_sep = v_sep
         self.h_sep = h_sep
         v_vertexs = flatten([(i*v_sep, 0, i*v_sep, size[1]) for i in range(1, v_lines+1)])
         h_vertexs = flatten([(0, i*h_sep, size[0], i*h_sep) for i in range(1, h_lines+1)])
-        self.h_vertex_list = pyglet.graphics.vertex_list(h_lines*2, ('v2f\static', h_vertexs), ("c3B\static", h_colors))
-        self.v_vertex_list = pyglet.graphics.vertex_list(v_lines*2 , ('v2f\static', v_vertexs), ("c3B\static", v_colors))
+        self.h_vertex_list = pyglet.graphics.vertex_list(h_lines*2, ('v2f\static', h_vertexs), ("c4B\static", h_colors))
+        self.v_vertex_list = pyglet.graphics.vertex_list(v_lines*2 , ('v2f\static', v_vertexs), ("c4B\static", v_colors))
         border_vertexs = (
             0,0,
             self.size[0], 0,
@@ -63,7 +63,7 @@ class Grid(Graph):
 
     def draw(self):
         gl.glPushMatrix()
-        gl.glLineStipple(1,1)
+        gl.glLineStipple(3, 0xAAAA)
         gl.glEnable(pyglet.gl.GL_LINE_STIPPLE)
         gl.glTranslatef(self.position[0], self.position[1], 0)
         self.h_vertex_list.draw(gl.GL_LINES)
@@ -98,7 +98,7 @@ class StreamGraph(Graph):
         colors = flatten([self._color for x in range(n_samples)])
         self._vertex_list = pyglet.graphics.vertex_list(n_samples, ('v2f\stream', vertexs), ("c3B\static", colors))
 
-        self.grid = Grid(h_lines=4, v_lines=4, size=size, position=position)
+        self.grid = Grid(h_lines=3, v_lines=3, size=size, position=position)
 
         self.samples_per_h_division = int(self.n_samples / float(self.grid.h_lines))
         self.samples_per_h_division_label = pyglet.text.Label(str(self.samples_per_h_division)+ "/div",
