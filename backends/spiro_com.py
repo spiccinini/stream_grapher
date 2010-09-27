@@ -3,8 +3,9 @@
 
 import serial
 import struct
+from backend import Backend
 
-class Spiro(object):
+class Spiro(Backend):
     def __init__(self, port="COM2", timeout=0.5):
         self.ser = serial.Serial(port=port, timeout=timeout)
 
@@ -19,11 +20,6 @@ class Spiro(object):
 
     def stop(self):
         self.ser.write("0")
-
-    def close(self):
-        self.stop()
         self.ser.close()
 
-    def __del__(self):
-        self.stop()
-        self.ser.close()
+

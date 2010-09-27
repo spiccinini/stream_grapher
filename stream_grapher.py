@@ -50,18 +50,12 @@ def on_draw():
         widget.draw()
     fps_display.draw()
 
-
 event_loop = pyglet.app.EventLoop()
 @event_loop.event
 def on_exit():
     for backend in config.backends:
-        try:
-            backend.stop()
-        except AttributeError:
-            pass
-
+        backend.stop()
     event_loop.exit()
-
 
 def update(dt):
     for backend in config.backends:
@@ -82,9 +76,6 @@ pyglet.clock.schedule(update)
 
 # Some backends (eg: pyjack) need initializaction after all machinery is running.
 for backend in config.backends:
-    try:
-        backend.start()
-    except AttributeError:
-        pass
+    backend.start()
 
 event_loop.run()
