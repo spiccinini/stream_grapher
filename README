@@ -29,7 +29,25 @@ Widgets
 signal.
 * FFTWidget: Draws the FFT of the input stream.
 
-USAGE
+Dependencies
+============
+
+python >=2.5 (2.5 should work but it's tested under 2.6)
+pyglet 1.1
+numpy
+scipy
+
+Install
+=======
+
+You don't need to install stream_grapher, just download the code to a directory
+and use it from there (see Usage below). The idea behind is that you have
+all the code right there to see and modify.
+
+You must have Dependencies installed.
+
+
+Usage
 =====
 
 To use stream_grapher you must a configuration and save it to config.py (see 
