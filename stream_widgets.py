@@ -461,8 +461,8 @@ class MultipleStreamWidget(object):
 
 
 class FFTWidget(object):
-    def __init__(self, fft_size, fft_window_size, sample_rate, size, position):
-        self.graph = FFTGraph(fft_size, fft_window_size, sample_rate, size, position, (255,0,90))
+    def __init__(self, fft_size, fft_window_size, sample_rate, size, position, color=(255,0,90)):
+        self.graph = FFTGraph(fft_size, fft_window_size, sample_rate, size, position, color)
         self.size = size
         self.position = position
         self.gui_frame = Frame(Theme(os.path.join(PATH, "themes/pywidget")), w=2000, h=2000)
