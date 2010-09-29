@@ -1,5 +1,7 @@
+.. -*- restructuredtext -*-
+
 Stream Grapher
-=============
+==============
 
 It's a tool to visualize data streams or signals in real time. It can draw the 
 streams in different ways from oscilloscope views to frequency domain graphs.
@@ -8,9 +10,13 @@ It's intended use is in development and prototyping of hardware or software
 that generates some kind of signal to visualize in 2D. It's also useful to
 test software filters.
 
-The most important parts of Stream Grapher are backends and widgets.
+The most important components of Stream Grapher are backends_ and widgets_.
 A backend generates samples or get the samples from external hardware and pass
 them to the widgets. The widgets only graph the samples.
+
+If you want to use it with some hardware you have thats plugged in some way
+to the PC, like serial COM port, USB, Parallel, etc, you must write your own
+`custom backend`_.
 
 Backends
 --------
@@ -25,17 +31,18 @@ Widgets
 * StreamWidget: It's an oscilloscope for only one stream.
 * MultipleStreamWidget: It's an oscilloscope that draws multiple streams.
 * MultipleStreamWidget: It's an oscilloscope that draws multiple streams.
-* BrowsableStreamWidget: It's a widget that let you move in the x axis along all the
-signal.
+* BrowsableStreamWidget: It's a widget that let you move in the x axis along
+  all the signal.
 * FFTWidget: Draws the FFT of the input stream.
 
 Dependencies
 ============
 
-python >=2.5 (2.5 should work but it's tested under 2.6)
-pyglet 1.1
-numpy
-scipy
+* python >=2.5 (2.5 should work but it's tested under 2.6)
+* pyglet 1.1
+* numpy
+* scipy
+* PyJack (optional, see Audio_)
 
 Install
 =======
@@ -44,8 +51,7 @@ You don't need to install stream_grapher, just download the code to a directory
 and use it from there (see Usage below). The idea behind is that you have
 all the code right there to see and modify.
 
-You must have Dependencies installed.
-
+You must have Dependencies_ installed.
 
 Usage
 =====
@@ -55,6 +61,7 @@ config_example.py) in the same direcory of stream_grapher.py.
 
 Audio
 -----
+
 Stream grapher provides a JACK backend to get the audio samples, so you must have
 jack and pyjack installed in order to use it. Take a look to config_jack.py to
 write your custom config.py.
@@ -64,8 +71,9 @@ PyJack: http://sourceforge.net/projects/py-jack/
 
 
 
-Custom backend (graph your own hardware or software streams)
+Custom backend
 --------------
+
 To use stream_grapher with your hardware or software you must write a backend 
 that gets the samples and pass them to the graphs. It should be very easy in 
 most cases and there are a lot of examples in backends directory.
@@ -76,8 +84,6 @@ Digital filter development
 --------------------------
 
 TODO
-
-
 
 License
 =======
