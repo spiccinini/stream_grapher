@@ -20,29 +20,33 @@ to the PC, like serial COM port, USB, Parallel, etc, you must write your own
 
 Backends
 --------
-* File Reader (filereader.py): Read samples from a comma separated text file.
-* Math functions (maths.py): Generates math functions.
-* JACK audio (pyjack.py): Provides a JACK client.
-* Sthocastic processes (sthocastic.py): Generates sthocastic streams.
-* Spiro COM (spiro_com.py: Read samples from Serial COM port.
+
+- File Reader (filereader.py): Read samples from a comma separated text file.
+- Math functions (maths.py): Generates math functions.
+- JACK audio (pyjack.py): Provides a JACK client.
+- PyAudio (pyaudiob.py): Audio input from PortAudio throw PyAudio
+- Sthocastic processes (sthocastic.py): Generates sthocastic streams.
+- Spiro COM (spiro_com.py: Read samples from Serial COM port.
 
 Widgets
 -------
-* StreamWidget: It's an oscilloscope for only one stream.
-* MultipleStreamWidget: It's an oscilloscope that draws multiple streams.
-* MultipleStreamWidget: It's an oscilloscope that draws multiple streams.
-* BrowsableStreamWidget: It's a widget that let you move in the x axis along
+
+- StreamWidget: It's an oscilloscope for only one stream.
+- MultipleStreamWidget: It's an oscilloscope that draws multiple streams.
+- MultipleStreamWidget: It's an oscilloscope that draws multiple streams.
+- BrowsableStreamWidget: It's a widget that let you move in the x axis along
   all the signal.
-* FFTWidget: Draws the FFT of the input stream.
+- FFTWidget: Draws the FFT of the input stream.
 
 Dependencies
 ============
 
-* python >=2.5 (2.5 should work but it's tested under 2.6)
-* pyglet 1.1
-* numpy
-* scipy
-* PyJack (optional, see Audio_)
+- python >=2.5 (2.5 should work but it's tested under 2.6)
+- pyglet 1.1
+- numpy
+- scipy
+- PyJack (optional, see Audio_)
+- PyAudio (optional, see Audio_)
 
 Install
 =======
@@ -67,12 +71,19 @@ stream_grapher like you would do with any python script:
 Audio
 -----
 
-Stream grapher provides a JACK backend to get the audio, so you must have jack
-and pyjack installed in order to use it. Take a look to config_jack.py to write your
-custom config.py.
+Stream grapher provides two different ways to get the audio samples from *live sources*:
 
-JACK: http://jackaudio.org/
-PyJack: http://sourceforge.net/projects/py-jack/
+1. JACK backend. You must have jack and pyjack installed in order to use it. Take a look to config_jack.py to write your
+   custom config.py.
+
+   JACK: http://jackaudio.org/
+   PyJack: http://sourceforge.net/projects/py-jack/
+
+2. PortAudio backend. You must have PyAudio installed. Configuration should be like Jack backend's.
+
+   PyAudio: http://people.csail.mit.edu/hubert/pyaudio/
+
+If you want to get the audio from encoded files you may write a PyMedia backend.
 
 
 
