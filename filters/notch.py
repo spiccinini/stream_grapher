@@ -61,8 +61,8 @@ class Notch(object):
         self.x_old = [0, 0]
         self.y_old = [0, 0]
 
-    def __call__(self, input):
-        x = [input] + self.x_old
+    def __call__(self, data):
+        x = [data] + self.x_old
         x_filtered = map(operator.mul, x, self.B)
         y_filtered = map(operator.mul, self.y_old, self.A_nec)
         out = reduce(operator.add, x_filtered + y_filtered)

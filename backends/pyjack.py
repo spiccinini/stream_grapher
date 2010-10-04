@@ -22,19 +22,22 @@ import threading
 import time
 import sys
 
-import scipy.signal
+from scipy.signal import iirdesign, lfilter
 import numpy
 
-class Filter(object):
+class PasaBajos(object):
     def __init__(self):
-        self.b, self.a = scipy.signal.iirdesign(wp = 0.05, ws = 0.2, gpass=1, gstop=40)
-        self.initial_conditions = numpy.zeros(max(len(self.a),len(self.b))-1)
+        FS = 48000.
+        BANDPASS = 1000.
+        STOPBAND = 1500.
+        self.b, self.a = iirdesign(wp = BANDPASS/FS, ws = STOPBAND/FS, gpass=0.1, gstop=40)
+        self.init_cond = numpy.zeros(max(len(self.a),len(self.b))-1)
 
     def do_filter(self, data):
-        filtered_data, self.initial_conditions = scipy.signal.lfilter(self.b, self.a, data, zi=self.initial_conditions)
+        filtered_data, self.init_cond = lfilter(self.b, self.a, data, zi=self.init_cond)
         return filtered_data
 
-filtro = Filter()
+filtro = PasaBajos()
 
 class JackWorker(threading.Thread):
     def __init__(self, output, capture, counter, sleep, nonstop_event):
@@ -49,11 +52,10 @@ class JackWorker(threading.Thread):
     def run(self):
         while self.nonstop_event.isSet():
             try:
-                # TODO: add a Lock
                 jack.process(self.output, self.capture)
                 self.capture[0] = filtro.do_filter(self.capture[0])
-                self.capture[1] = filtro.do_filter(self.capture[1])
-                self.output = self.capture
+                self.output = self.capture.copy()
+
                 self.counter[0] += 1
                 time.sleep(self.sleep)
             except jack.InputSyncError:

@@ -46,6 +46,7 @@ def on_draw():
     pyglet.gl.glMatrixMode(pyglet.gl.GL_MODELVIEW)
     pyglet.gl.glLoadIdentity()
     pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
+    pyglet.gl.glLineWidth(2)
     for widget in config.widgets:
         widget.draw()
     fps_display.draw()
@@ -72,7 +73,7 @@ def update(dt):
                 else:
                     connection.out.graph.add_samples(out_samples)
 
-pyglet.clock.schedule(update)
+pyglet.clock.schedule_interval(update, 1/60.)
 
 # Some backends (eg: pyjack) need initializaction after all machinery is running.
 for backend in config.backends:

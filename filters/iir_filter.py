@@ -92,8 +92,8 @@ class IIRFilter(object):
         self.x_old = [0] * (len(b)-1)
         self.y_old = [0] * (len(a)-1)
 
-    def __call__(self, input):
-        x = [input] + self.x_old
+    def __call__(self, data):
+        x = [data] + self.x_old
         x_filtered = map(operator.mul, x, self.b)
         y_filtered = map(operator.mul, self.y_old, self._a_nec)
         out = reduce(operator.add, x_filtered + y_filtered)
