@@ -35,4 +35,15 @@ class Backend(object):
         pass
 
     def get_remaining_samples(self):
+        """
+        This method is called by stream_grapher to get new samples from the backend.
+        It should retrieve a list or numpy's array. If the backend has N ports and
+        is returning M samples the shape should be
+        [[port1_sample1, port1_sample2, ..., port1_sampleM],
+         [port2_sample1, port2_sample2, ..., port2_sampleM],
+         ...,
+         [portN_sample1, portN_sample2, ..., portN_sampleM]]
+
+        If there are no samples to retrieve just return an empty list.
+        """
         raise NotImplementedError

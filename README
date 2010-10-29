@@ -93,7 +93,8 @@ Custom backend
 To use stream_grapher with your hardware or software you must write a backend
 that gets the samples and pass them to the graphs. It should be very easy in
 most cases and there are a lot of examples in backends directory.
-Take a look to spiro_com that receives samples from the serial port.
+Take a look to spiro_com, that receives samples from the serial port, and
+backend.py.
 
 
 Digital filter development
