@@ -20,7 +20,6 @@ import numpy
 import pyaudio
 import threading
 import Queue
-import numpy
 
 BUFFER_SIZE = 1024
 FORMAT = pyaudio.paFloat32
