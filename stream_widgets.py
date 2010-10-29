@@ -445,12 +445,18 @@ class BrowsableStreamWidget(object):
 
 
 class MultipleStreamWidget(object):
-    def __init__(self, n_graphs, n_samples, size, position, colors=None):
+    def __init__(self, n_graphs, n_samples, size, position, space_verticaly=False, colors=None):
         if not colors:
             colors = [(255,0,90) for g in range(n_graphs)]
         cfg = {"n_samples":n_samples, "size":size, "position":position, "colors":colors}
         self.graph = MultipleStreamGraph(n_graphs, cfg)
         self.size = size
+        if space_verticaly:
+            spacing = 1 / float(n_graphs+1)
+            spacings = [spacing*n for n in range(1, n_graphs+1)]
+            print spacings
+            for n, graph in enumerate(self.graph):
+                graph.v_position =  spacings[n]
 
     def draw(self):
        self.graph.draw()
