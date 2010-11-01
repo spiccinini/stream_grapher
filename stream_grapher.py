@@ -46,7 +46,7 @@ def on_draw():
     pyglet.gl.glMatrixMode(pyglet.gl.GL_MODELVIEW)
     pyglet.gl.glLoadIdentity()
     pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
-    pyglet.gl.glLineWidth(2)
+    pyglet.gl.glLineWidth(1)
     for widget in config.widgets:
         widget.draw()
     fps_display.draw()
