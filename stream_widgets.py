@@ -231,6 +231,9 @@ class MultipleStreamGraph(object):
             def __init__(self):
                 self.h_sep = 100
                 self.v_sep = 100
+                self.h_lines = 3
+                self.v_lines = 3
+
             def draw(self): pass
 
         for graph in self.stream_graphs[:-1]: # Only need 1 real grid
@@ -360,7 +363,7 @@ class StreamWidget(object):
         self.position = position
 
         self.gui_frame = Frame(Theme(os.path.join(PATH, "themes/pywidget")), w=2000, h=2000)
-        config_gui = Dialogue('Control 1', x=self.position[0], y=self.size[1]+self.position[1]+200, content=
+        config_gui = Dialogue('Control 1', x=self.position[0], y=self.position[1], content=
             VLayout(hpadding=0, children=[
                 #Label(".                                       ."),
                 FoldingBox('H settings', content=
@@ -451,6 +454,7 @@ class MultipleStreamWidget(object):
         cfg = {"n_samples":n_samples, "size":size, "position":position, "colors":colors}
         self.graph = MultipleStreamGraph(n_graphs, cfg)
         self.size = size
+        self.position = position
         if space_verticaly:
             spacing = 1 / float(n_graphs+1)
             spacings = [spacing*n for n in range(1, n_graphs+1)]
@@ -458,8 +462,37 @@ class MultipleStreamWidget(object):
             for n, graph in enumerate(self.graph):
                 graph.v_position =  spacings[n]
 
+        self.gui_frame = Frame(Theme(os.path.join(PATH, "themes/pywidget")), w=2000, h=2000)
+
+        config_gui = Dialogue('Control', x=self.position[0], y=self.position[1], content=
+            VLayout(hpadding=0, children=[
+                #Label(".                                       ."),
+                FoldingBox('H settings', content=
+                    HLayout(children=[
+                        Label('sam/div: ', hexpand=False),
+                        TextInput(text="", action = lambda x: [graph.set_samples_per_h_division(float(x.text)) for graph in self.graph])
+                    ])
+                ),
+                FoldingBox('V settings', content=
+                    VLayout(children=[
+                        HLayout(children=[
+                            Label('val/div', hexpand=False),
+                            TextInput(text='100', action = lambda x: [graph.set_values_per_v_division(float(x.text)) for graph in self.graph])
+                        ]),
+                        VLayout(children=[HLayout(children=[
+                            Label('position:', halign='right'),
+                            Slider(w=100, min=0.0, max=1.0, value=0.5, action=lambda x: graph.set_v_position(x.value)),
+                            ]) for graph in self.graph.stream_graphs]
+                        )
+                    ])
+                )
+            ])
+        )
+        self.gui_frame.add(config_gui)
+
     def draw(self):
        self.graph.draw()
+       self.gui_frame.draw()
 
     def set_n_samples(self, n_samples):
         "Resize samples per widget"
