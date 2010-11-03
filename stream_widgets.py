@@ -150,6 +150,9 @@ class StreamGraph(Graph):
 
     def set_samples_per_h_division(self, samples_per_div):
         self.set_n_samples(int(samples_per_div * self.grid.h_lines))
+    
+    def get_samples_per_h_division(self):
+        return self.n_samples/self.grid.h_lines
 
     def set_amplification(self, amplification):
         self._amplification = amplification
@@ -369,7 +372,7 @@ class StreamWidget(object):
                 FoldingBox('H settings', content=
                     HLayout(children=[
                         Label('sam/div: ', hexpand=False),
-                        TextInput(text="", action = lambda x:self.graph.set_samples_per_h_division(float(x.text)))
+                        TextInput(text=str(self.graph.get_samples_per_h_division()), action = lambda x:self.graph.set_samples_per_h_division(float(x.text)))
                     ])
                 ),
                 FoldingBox('V settings', content=
@@ -412,7 +415,7 @@ class BrowsableStreamWidget(object):
                     VLayout(children=[
                         HLayout(children=[
                             Label('sam/div: ', hexpand=False),
-                            TextInput(text="", action = lambda x:self.graph.set_samples_per_h_division(float(x.text)))
+                            TextInput(text=str(self.graph.get_samples_per_h_division()), action = lambda x:self.graph.set_samples_per_h_division(float(x.text)))
                         ]),
                         HLayout(children=[
                             Label('position:', halign='right'),
@@ -457,20 +460,21 @@ class MultipleStreamWidget(object):
         self.position = position
         if space_verticaly:
             spacing = 1 / float(n_graphs+1)
-            spacings = [spacing*n for n in range(1, n_graphs+1)]
-            print spacings
+            spacings = [spacing*n for n in range(1, n_graphs+1)][::-1]
             for n, graph in enumerate(self.graph):
                 graph.v_position =  spacings[n]
 
         self.gui_frame = Frame(Theme(os.path.join(PATH, "themes/pywidget")), w=2000, h=2000)
+        
+        def gen_change_v_position(n):
+            return lambda x: self.graph[n].set_v_position(x.value)
 
         config_gui = Dialogue('Control', x=self.position[0], y=self.position[1], content=
             VLayout(hpadding=0, children=[
-                #Label(".                                       ."),
                 FoldingBox('H settings', content=
                     HLayout(children=[
                         Label('sam/div: ', hexpand=False),
-                        TextInput(text="", action = lambda x: [graph.set_samples_per_h_division(float(x.text)) for graph in self.graph])
+                        TextInput(text=str(self.graph[0].get_samples_per_h_division()), action = lambda x: [graph.set_samples_per_h_division(float(x.text)) for graph in self.graph])
                     ])
                 ),
                 FoldingBox('V settings', content=
@@ -481,8 +485,8 @@ class MultipleStreamWidget(object):
                         ]),
                         VLayout(children=[HLayout(children=[
                             Label('position:', halign='right'),
-                            Slider(w=100, min=0.0, max=1.0, value=0.5, action=lambda x: graph.set_v_position(x.value)),
-                            ]) for graph in self.graph.stream_graphs]
+                            Slider(w=100, min=0.0, max=1.0, value=self.graph[n].v_position, action=gen_change_v_position(n)),
+                            ]) for n in range(n_graphs)]
                         )
                     ])
                 )
