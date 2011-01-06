@@ -239,8 +239,8 @@ class MultipleStreamGraph(object):
 
             def draw(self): pass
 
-        for graph in self.stream_graphs[:-1]: # Only need 1 real grid
-            graph.grid = FakeGrid()
+        for graph in self.stream_graphs[:-1]: # Only need to draw 1 grid
+            graph.grid.draw = lambda : None
 
     def draw(self):
         for graph in self.stream_graphs:
@@ -285,7 +285,7 @@ class FFTGraph(Graph):
         colors = flatten([self._color for x in range(self.x_axis_len)])
         self._vertex_list = pyglet.graphics.vertex_list(self.x_axis_len, ('v2f\stream', vertexs), ("c3B\static", colors))
 
-        self.freq_per_h_division = self.sample_rate/2 * float(self.grid.h_sep) / float(self.width) * self.h_scale
+        self.freq_per_h_division = self.sample_rate/2 * float(self.grid.v_sep) / float(self.width) * self.h_scale
         self.freq_per_h_division_label = pyglet.text.Label(str(self.freq_per_h_division)+ "Hz/div",
                           font_size=12, x=size[0]/2.0 + position[0], y=position[1]- 10, anchor_x='center', anchor_y='center')
 
@@ -485,7 +485,7 @@ class MultipleStreamWidget(object):
                         ]),
                         VLayout(children=[HLayout(children=[
                             Label('position:', halign='right'),
-                            Slider(w=100, min=0.0, max=1.0, value=self.graph[n].v_position, action=gen_change_v_position(n)),
+                            Slider(w=100, min=-10.0, max=10.0, value=self.graph[n].v_position, action=gen_change_v_position(n)),
                             ]) for n in range(n_graphs)]
                         )
                     ])
