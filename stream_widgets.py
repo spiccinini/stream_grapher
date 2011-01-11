@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+﻿# -*- coding: UTF-8 -*-
 
 # Copyright (C) 2009, 2010  Santiago Piccinini
 #
@@ -15,15 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from circular_buffers import CircularBuffer
-from utils import flatten, as_numpy_array
-import pyglet.graphics
+import os
+
 import numpy
 import scipy.signal
+import pyglet.graphics
 from pyglet import gl
 from simplui import Frame, Theme, Dialogue, VLayout, Label, Button, \
                     TextInput, HLayout, FlowLayout, FoldingBox, Slider
-import os
+
+from circular_buffers import CircularBuffer
+from utils import flatten, as_numpy_array, Persistable
+
 PATH = os.path.dirname(os.path.realpath(__file__))
 
 class Graph(object):
@@ -74,10 +77,13 @@ class Grid(Graph):
         gl.glPopMatrix()
 
 
-class StreamGraph(Graph):
+class StreamGraph(Graph, Persistable):
+    persisting = ("n_samples", "_amplification", "v_position")
+
     def __init__(self, n_samples, size, position, color=(255,255,255)):
         Graph.__init__(self, size, position, color)
-        self.n_samples = n_samples
+        Persistable.__init__(self)
+        self._n_samples = n_samples
 
         self.samples = CircularBuffer(n_samples, 0.) #[0]*n_samples#
         self.actual_sample_index = 0
@@ -136,7 +142,7 @@ class StreamGraph(Graph):
         "Set a new value of n_samples"
         if n_samples <=0:
             raise AttributeError("n_samples must be > 0")
-        self.n_samples = n_samples
+        self._n_samples = n_samples
         new_samples = CircularBuffer(n_samples, 0.)
         to_copy = min(self.samples.size, n_samples)
         new_samples[:to_copy] = self.samples[:to_copy]
@@ -162,6 +168,9 @@ class StreamGraph(Graph):
 
     def set_values_per_v_division(self, values_per_div):
         self.set_amplification(self.grid.v_sep / float(values_per_div))
+
+    def get_values_per_v_division(self):
+        return self.grid.v_sep / self.amplification
 
     def get_amplification(self):
         return self._amplification
@@ -197,6 +206,7 @@ class StreamGraph(Graph):
 
     amplification = property(get_amplification, set_amplification)
     color_property = property(get_color, set_color)
+    n_samples = property(lambda self: self._n_samples, set_n_samples) 
 
 
 class BrowsableStreamGraph(StreamGraph):
@@ -261,18 +271,20 @@ class MultipleStreamGraph(object):
         return self.stream_graphs[key]
 
 
-class FFTGraph(Graph):
+class FFTGraph(Graph, Persistable):
+    persisting = ("fft_size", "fft_window_size", "amplification")
     def __init__(self, fft_size, fft_window_size, sample_rate, size, position, color=(255,0,0), window_type="boxcar"):
         Graph.__init__(self, size, position, color)
-        self.fft_size = fft_size
-        self.fft_window_size = fft_window_size
-        self.samples = CircularBuffer(self.fft_window_size, 0.) # For saving incoming samples before compute FFT
+        Persistable.__init__(self)
+        self._fft_size = fft_size
+        self._fft_window_size = fft_window_size
+        self.samples = CircularBuffer(self._fft_window_size, 0.) # For saving incoming samples before compute FFT
         self.x_axis_len = (fft_size/2+1)  # For rfft only! This function does not compute the negative frequency terms,
                                           # and the length of the transformed axis of the output is therefore n/2+1
         self.beans = 1 #beans
         self.ffted_data = [0] * self.x_axis_len
         self.window_type = window_type
-        self.window = scipy.signal.get_window(self.window_type, self.fft_window_size)
+        self.window = scipy.signal.get_window(self.window_type, self._fft_window_size)
         self._color = color
         self._amplification = 1
         self.log = False
@@ -291,8 +303,8 @@ class FFTGraph(Graph):
                           font_size=12, x=size[0]/2.0 + position[0], y=position[1]- 10, anchor_x='center', anchor_y='center')
 
     def do_fft(self, samples):
-        rfft = numpy.fft.rfft(self.samples*self.window, self.fft_size)
-        ffted_data = numpy.abs(rfft) * self._amplification / min(self.fft_window_size, self.fft_window_size)
+        rfft = numpy.fft.rfft(self.samples*self.window, self._fft_size)
+        ffted_data = numpy.abs(rfft) * self._amplification / min(self._fft_size, self._fft_window_size)
         if self.log:
             ffted_data = np.log10(ffted_data)
         return ffted_data
@@ -309,20 +321,20 @@ class FFTGraph(Graph):
         self._vertex_list.colors = flatten([self._color for x in range(self.x_axis_len)])
 
     def set_fft_size(self, fft_size):
-        self.fft_size = fft_size
+        self._fft_size = fft_size
         self.x_axis_len = (fft_size/2+1)
-        self.samples = CircularBuffer(self.fft_window_size, 0.)
+        self.samples = CircularBuffer(self._fft_window_size, 0.)
         self._vertex_list.resize(self.x_axis_len)
         self.regenerate_graph()
 
     def set_fft_window_size(self, fft_window_size):
-        self.fft_window_size = fft_window_size
-        self.window = scipy.signal.get_window(self.window_type, self.fft_window_size)
-        self.samples = CircularBuffer(self.fft_window_size, 0.)
+        self._fft_window_size = fft_window_size
+        self.window = scipy.signal.get_window(self.window_type, self._fft_window_size)
+        self.samples = CircularBuffer(self._fft_window_size, 0.)
         self.regenerate_graph()
 
     def set_window_type(self, window_type):
-        self.window = scipy.signal.get_window(self.window_type, self.fft_window_size)
+        self.window = scipy.signal.get_window(self.window_type, self._fft_window_size)
         self.regenerate_graph()
 
     def get_amplification(self):
@@ -354,13 +366,16 @@ class FFTGraph(Graph):
         the FFT is calculated, the graph updated and acumulated data cleaned.
         """
         need_to_do_FFT = False
-        if len(samples) + self.samples._index >= self.fft_window_size:
+        if len(samples) + self.samples._index >= self._fft_window_size:
             need_to_do_FFT = True
         self.samples.put(samples)
         if need_to_do_FFT:
             self.regenerate_graph()
 
     amplification = property(get_amplification, set_amplification)
+    fft_size = property(lambda self: self._fft_size, set_fft_size)
+    fft_window_size = property(lambda self: self._fft_window_size, set_fft_window_size)
+    
 
 class StreamWidget(object):
     def __init__(self, n_samples, size, position, color):
@@ -382,7 +397,7 @@ class StreamWidget(object):
                     VLayout(children=[
                         HLayout(children=[
                             Label('val/div', hexpand=False),
-                            TextInput(text='100', action = lambda x:self.graph.set_values_per_v_division(float(x.text)))
+                            TextInput(text=str(self.graph.get_values_per_v_division()), action = lambda x:self.graph.set_values_per_v_division(float(x.text)))
                         ]),
                         HLayout(children=[
                             Label('position:', halign='right'),

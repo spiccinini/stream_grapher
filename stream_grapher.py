@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
 # Copyright (C) 2009, 2010  Santiago Piccinini
@@ -18,9 +18,12 @@
 
 ''' A "real-time" stream grapher.
 '''
-import pyglet
-import numpy
 import sys
+import pickle
+
+import numpy
+import pyglet
+
 from connection import PatchBay
 
 try:
@@ -34,11 +37,21 @@ window_config = pyglet.gl.Config(**config.DISPLAY.pop("gl_config"))
 window = pyglet.window.Window(config=window_config, **config.DISPLAY)
 fps_display = pyglet.clock.ClockDisplay()
 
+try:
+    conf = pickle.load(open("conf.bin", "r"))
+    for widget in config.widgets:
+        graph = widget.graph
+        if hasattr(graph, "load"):
+            try:
+                graph.load(conf[graph.name])
+            except KeyError:
+                pass
+except IOError:
+    pass
+
 for widget in config.widgets:
-    try:
+    if hasattr(widget, "gui_frame"):
         window.push_handlers(widget.gui_frame)
-    except AttributeError: # Does not have GUI
-        pass
 
 @window.event
 def on_draw():
@@ -80,3 +93,13 @@ for backend in config.backends:
     backend.start()
 
 event_loop.run()
+
+
+conf = {}
+for widget in config.widgets:
+    graph = widget.graph
+    if hasattr(graph, "dump"):
+        d = graph.dump()
+        conf[graph.name] = d
+
+conf_file = pickle.dump(conf, open("conf.bin", "w"))

@@ -24,3 +24,21 @@ def from_iterable(iterables):
 
 def flatten(listOfLists):
     return list(itertools.chain(from_iterable(listOfLists)))
+
+class Persistable(object):
+    persisting = tuple()
+    def __init__(self, name=None):
+        if name is None:
+            self.name = repr(self.__class__)
+        else:
+            self.name = name
+
+    def dump(self):
+        d = {}
+        for item in self.persisting:
+            d[item] = getattr(self, item)
+        return d
+
+    def load(self, d):
+        for key in d:
+            setattr(self, key, d[key])
