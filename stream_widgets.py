@@ -275,6 +275,7 @@ class FFTGraph(Graph):
         self.window = scipy.signal.get_window(self.window_type, self.fft_window_size)
         self._color = color
         self._amplification = 1
+        self.log = False
         self.sample_rate = sample_rate
         self.h_scale = 1.0
         self.h_position = 0.0 # 0.0 to the left, 1.0 to the right
@@ -291,7 +292,9 @@ class FFTGraph(Graph):
 
     def do_fft(self, samples):
         rfft = numpy.fft.rfft(self.samples*self.window, self.fft_size)
-        ffted_data = numpy.abs(rfft) * self._amplification
+        ffted_data = numpy.abs(rfft) * self._amplification / min(self.fft_window_size, self.fft_window_size)
+        if self.log:
+            ffted_data = np.log10(ffted_data)
         return ffted_data
 
     def _vertex_list_from_ffted_data(self, ffted_data):
