@@ -3,7 +3,7 @@ from PyQt4 import QtOpenGL
 from OpenGL import GL as gl
 
 class QGLDrawer(QtOpenGL.QGLWidget):
-    def __init__(self, parent, graph):
+    def __init__(self, graph, parent=None):
         QtOpenGL.QGLWidget.__init__(self, parent)
         self.graph = graph
 

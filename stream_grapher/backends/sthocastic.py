@@ -15,7 +15,7 @@ class RandomWalker(object):
         return self
 
     def next(self):
-        self.actual += random.choice((-1, 1))
+        self.actual += random.choice((-0.01, 0.01))
         if self.min_value is not None and self.min_value > self.actual:
             self.actual = self.min_value
         elif self.max_value is not None and self.max_value < self.actual:
@@ -43,7 +43,7 @@ class Brownian(Backend):
         Backend.__init__(self, ports, sample_rate=sample_rate)
         sleep = 1./sample_rate
         self.out_queue = Queue.Queue()
-        walkers = [RandomWalker(min_value=-255, max_value=255) for x in range(ports)]
+        walkers = [RandomWalker(min_value=-1, max_value=1) for x in range(ports)]
         self.worker = BrownianWorker(walkers, self.out_queue, sleep)
         self.worker.start()
 

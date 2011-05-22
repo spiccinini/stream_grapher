@@ -1,8 +1,10 @@
 import sys, os
+import numpy as np
 from PyQt4 import QtCore, QtGui, uic
 
-from widgets.qt_graph import QGLDrawer
-from widgets.stream_graph import StreamGraph
+from connection import PatchBay
+
+DRAW_FPS = 60
 
 # Create a class for our main window
 class Main(QtGui.QMainWindow):
@@ -13,11 +15,43 @@ class Main(QtGui.QMainWindow):
         uifile = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'qtui/main.ui')
         uic.loadUi(uifile, self)
 
-        self.glwidget = QGLDrawer(self, StreamGraph(n_samples=300, size=(2, 2), position=(-1, -1), color=(255,255,255)))
-        self.central_layout.addWidget(self.glwidget)
-        self.fps_timer = QtCore.QTimer()
-        self.fps_timer.timeout.connect(self.glwidget.updateGL)
-        self.fps_timer.start(1/60.*1000)
+        import config
+        self.config = config
+
+        for widget in self.config.widgets:
+            self.central_layout.addWidget(widget)
+
+        for backend in self.config.backends:
+            backend.start()
+
+        self.update_timer = QtCore.QTimer()
+        self.update_timer.timeout.connect(self.update)
+        self.update_timer.setInterval(1000/float(DRAW_FPS))
+
+    def on_actionPlay_toggled(self, checked):
+        if checked:
+            self.update_timer.start()
+        else:
+            self.update_timer.stop()
+
+    def update(self):
+        for backend in self.config.backends:
+            samples = backend.get_remaining_samples()
+            for connection in PatchBay.connections:
+                if connection.src is backend:
+                    samples = np.asarray(samples)
+                    if samples.size != 0:
+                        out_samples = samples.transpose()[connection.src_port-1]
+                    else:
+                        out_samples = samples
+                    if connection.out_port:
+                        connection.out.graph.add_samples(out_samples, connection.out_port-1)
+                    else:
+                        connection.out.graph.add_samples(out_samples)
+
+        for widget in self.config.widgets:
+            widget.updateGL()
+
 
 def main():
     app = QtGui.QApplication(sys.argv)
