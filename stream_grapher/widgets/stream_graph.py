@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 
-# Copyright (C) 2009, 2010  Santiago Piccinini
+# Copyright (C) 2009, 2010, 2011  Santiago Piccinini
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,8 +17,6 @@
 
 import numpy as np
 from OpenGL import GL as gl
-from OpenGL import GLU as glu
-import OpenGL.arrays.vbo
 
 from stream_grapher.circular_buffers import CircularBuffer
 from graph import Graph, DrawableLineStrip

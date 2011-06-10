@@ -1,6 +1,6 @@
 ﻿# -*- coding: UTF-8 -*-
 
-# Copyright (C) 2009, 2010  Santiago Piccinini
+# Copyright (C) 2009, 2010, 2011  Santiago Piccinini
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -156,7 +156,7 @@ class StreamGraph(Graph, Persistable):
 
     def set_samples_per_h_division(self, samples_per_div):
         self.set_n_samples(int(samples_per_div * self.grid.h_lines))
-    
+
     def get_samples_per_h_division(self):
         return self.n_samples/self.grid.h_lines
 
@@ -206,7 +206,7 @@ class StreamGraph(Graph, Persistable):
 
     amplification = property(get_amplification, set_amplification)
     color_property = property(get_color, set_color)
-    n_samples = property(lambda self: self._n_samples, set_n_samples) 
+    n_samples = property(lambda self: self._n_samples, set_n_samples)
 
 
 class BrowsableStreamGraph(StreamGraph):
@@ -268,7 +268,7 @@ class MultipleStreamGraph(object):
                     graph.add_samples(samples_array[i])
 
     def __getitem__(self, key):
-        return self.stream_graphs[key]
+        return self.stream_graphs[key]zzzz
 
 
 class FFTGraph(Graph, Persistable):
@@ -375,7 +375,7 @@ class FFTGraph(Graph, Persistable):
     amplification = property(get_amplification, set_amplification)
     fft_size = property(lambda self: self._fft_size, set_fft_size)
     fft_window_size = property(lambda self: self._fft_window_size, set_fft_window_size)
-    
+
 
 class StreamWidget(object):
     def __init__(self, n_samples, size, position, color):
@@ -483,7 +483,7 @@ class MultipleStreamWidget(object):
                 graph.v_position =  spacings[n]
 
         self.gui_frame = Frame(Theme(os.path.join(PATH, "themes/pywidget")), w=2000, h=2000)
-        
+
         def gen_change_v_position(n):
             return lambda x: self.graph[n].set_v_position(x.value)
 

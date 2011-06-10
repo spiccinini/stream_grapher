@@ -1,7 +1,6 @@
-﻿#!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+﻿# -*- coding: UTF-8 -*-
 
-# Copyright (C) 2009, 2010  Santiago Piccinini
+# Copyright (C) 2009, 2010, 2011  Santiago Piccinini
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
