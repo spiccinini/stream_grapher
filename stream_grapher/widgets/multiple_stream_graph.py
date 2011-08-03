@@ -53,6 +53,11 @@ class MultipleStreamGraph(object):
 
         self.samples = _SequenceView(sample_getter, sample_setter)
 
+        spacing = 1 / float(n_graphs+1)
+        spacings = [spacing*n for n in range(1, n_graphs+1)][::-1]
+        for n, graph in enumerate(self.stream_graphs):
+            graph.v_position =  spacings[n]
+
     def draw(self):
         for graph in self.stream_graphs:
             graph.draw()
@@ -64,7 +69,7 @@ class MultipleStreamGraph(object):
             if n_graph is not None:
                 self.stream_graphs[n_graph].add_samples(samples)
             else:
-                samples_array = samples.transpose()
+                samples_array = samples
                 for i, graph in enumerate(self.stream_graphs):
                     graph.add_samples(samples_array[i])
 
