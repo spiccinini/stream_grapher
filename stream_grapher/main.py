@@ -38,9 +38,6 @@ class Main(QtGui.QMainWindow):
         for widget in self.config.widgets:
             self.central_layout.addWidget(widget)
 
-        for backend in self.config.backends:
-            backend.start()
-
         self.update_timer = QtCore.QTimer()
         self.update_timer.timeout.connect(self.update)
         self.update_timer.setInterval(1000/float(DRAW_FPS))
@@ -48,8 +45,12 @@ class Main(QtGui.QMainWindow):
     def on_actionPlay_toggled(self, checked):
         if checked:
             self.update_timer.start()
+            for backend in self.config.backends:
+                backend.start()
         else:
             self.update_timer.stop()
+            for backend in self.config.backends:
+                backend.stop()
 
     def update(self):
         for backend in self.config.backends:
@@ -58,7 +59,7 @@ class Main(QtGui.QMainWindow):
                 if connection.src is backend:
                     samples = np.asarray(samples)
                     if samples.size != 0:
-                        out_samples = samples.transpose()[connection.src_port-1]
+                        out_samples = samples[connection.src_port-1]
                     else:
                         out_samples = samples
                     if connection.out_port:
