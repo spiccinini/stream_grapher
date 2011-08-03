@@ -29,7 +29,7 @@ class QGLDrawer(QtOpenGL.QGLWidget):
         gl.glClearColor(0.0, 0.0, 0.0, 1.0)
         gl.glEnable(gl.GL_BLEND)
         gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
-        gl.glEnable(gl.GL_LINE_SMOOTH)
+        #gl.glEnable(gl.GL_LINE_SMOOTH) # Antialiasing
 
     def resizeGL(self, w, h):
         gl.glViewport(0, 0, w, h)
