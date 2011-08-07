@@ -15,24 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, os
+import os
+import imp
 import numpy as np
 from PyQt4 import QtCore, QtGui, uic
 
-from connection import PatchBay
+from stream_grapher.connection import PatchBay
 
 DRAW_FPS = 60
 
 # Create a class for our main window
 class Main(QtGui.QMainWindow):
-    def __init__(self):
+    def __init__(self, config_filename):
         QtGui.QMainWindow.__init__(self)
 
         # This is always the same
         uifile = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'qtui/main.ui')
         uic.loadUi(uifile, self)
 
-        import config
+        config = imp.load_source('config', config_filename)
         self.config = config
 
         for widget in self.config.widgets:
@@ -69,15 +70,3 @@ class Main(QtGui.QMainWindow):
 
         for widget in self.config.widgets:
             widget.updateGL()
-
-
-def main():
-    app = QtGui.QApplication(sys.argv)
-    window = Main()
-    window.show()
-    # It's exec_ because exec is a reserved word in Python
-    sys.exit(app.exec_())
-
-if __name__ == "__main__":
-    main()
-

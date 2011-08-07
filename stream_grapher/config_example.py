@@ -1,15 +1,15 @@
 # -*- coding: UTF-8 -*-
 
-from widgets.stream_graph import StreamGraph
-from widgets.multiple_stream_graph import MultipleStreamGraph
-from widgets.browsable_stream_graph import BrowsableStreamGraph
-from widgets.qt_graph import QGLDrawer, QGLDrawerHScroll
-from connection import PatchBay
+from stream_grapher.widgets.stream_graph import StreamGraph
+from stream_grapher.widgets.multiple_stream_graph import MultipleStreamGraph
+from stream_grapher.widgets.browsable_stream_graph import BrowsableStreamGraph
+from stream_grapher.widgets.qt_graph import QGLDrawer, QGLDrawerHScroll
+from stream_grapher.connection import PatchBay
 
 backends = []
 widgets = []
 
-from backends.sthocastic import Brownian
+from stream_grapher.backends.sthocastic import Brownian
 sample_generator  = Brownian(ports=4, sample_rate=100)
 
 backends.append(sample_generator)
