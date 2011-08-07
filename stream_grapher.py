@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 2:
         print "Usage: ./stream_grapher.py config_file.py\n"
-        print "Take a look to stream_grapher/config_*.py files for inspiration."
+        print "Take a look to the example_configs directory for inspiration."
         sys.exit(1)
     else:
         config_filename = sys.argv[1]
