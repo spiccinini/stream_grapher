@@ -99,6 +99,7 @@ class FFTGraph(Graph):
     def draw(self):
         self.grid.draw()
         gl.glPushMatrix()
+        gl.glColor3ub(*self._color)
         gl.glTranslatef(self.position[0], self.position[1], 0)
         #pyglet.gl.glScissor(self.position[0], self.position[1], self.width, self.heigth+1)
         #pyglet.gl.glEnable(pyglet.gl.GL_SCISSOR_TEST)
