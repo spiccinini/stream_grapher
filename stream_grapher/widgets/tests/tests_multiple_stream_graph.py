@@ -29,9 +29,9 @@ class TestMultipleStremGraph(unittest.TestCase):
         self.graph = MultipleStreamGraph(n_graphs, n_samples, size, position, colors=[color]*3)
 
     def test_add_samples(self):
-        self.graph.add_samples([[50, 50, 50]])
+        self.graph.add_samples([[50], [50], [50]])
         self.assertTrue(all(self.graph.samples[0] == [50,50,50]))
-        self.graph.add_samples([[51, 52, 53]])
+        self.graph.add_samples([[51], [52], [53]])
         self.assertTrue(all(self.graph.samples[0] == [50,50,50]))
         self.assertTrue(all(self.graph.samples[1] == [51,52,53]))
 
