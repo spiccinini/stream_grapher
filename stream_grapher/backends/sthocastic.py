@@ -53,7 +53,7 @@ class Brownian(Backend):
             try:
                 samples.append(self.out_queue.get_nowait())
             except Queue.Empty:
-                return np.array(samples)
+                return np.array(samples).transpose()
 
 if __name__ == "__main__":
     brown_noise = Brownian(ports=4, sample_rate=100)
