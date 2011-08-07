@@ -17,6 +17,18 @@
 
 class Backend(object):
     def __init__(self, ports=1, sample_rate=1.0, y_axis_magnitude="mV"):
+        """
+        Backend base class. Every backend should inherite from this class.
+
+        ports are the number of different streams returned simultaneously.
+        Eg: 8 Channell ADC backend.
+        The sample rate is the sample rate of the device and not the how quickly
+        get_remaining_samples is called. It's only descriptive, eg. used in the
+        FFTWidget to build the frecuency axis.
+        y_axis_magnitude is descriptive. A sample of value 1 must equival to that
+        magnitude.
+        """
+
         self.ports = ports
         self.sample_rate = sample_rate
         self.y_axis_magnitude = y_axis_magnitude # a sample of value 1 must
@@ -24,13 +36,16 @@ class Backend(object):
 
     def start(self):
         """
-        Called after all machinery is up. Implement only if needed.
+        Get's called to start the backend. After that, get_remaining_samples
+        will be called periodicaly. Implement only if needed.
         """
         pass
 
     def stop(self):
         """
-        Called before exit. Implement only if needed.
+        Get's called to stop the backend. After that no more calls to
+        get_remaining_samples will be done. A subsequent start() could be made.
+        Implement only if needed.
         """
         pass
 
