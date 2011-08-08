@@ -22,8 +22,21 @@ from OpenGL import GL as gl
 from stream_grapher.circular_buffers import CircularBuffer
 from graph import Graph, DrawableLineStrip
 from grid import Grid
+from controls import ColorControl, FloatControl, IntControl, ChoicesControl
 
 class FFTGraph(Graph):
+
+    controls = [
+        IntControl("fft_size", "fft_size", "Length of the FFT size. Data is completed with zeros" \
+                                           "from window_size to fft_size."),
+        IntControl("fft_window_size", "fft_window_size", "Number of data samples used in the FFT"),
+        ChoicesControl("window_type", ("barthann", "bartlett", "blackman",
+                                       "blackmanharris", "bohman", "boxcar",
+                                       "flattop", "hamming", "hann", "nuttall",
+                                       "parzen", "triang")),
+        FloatControl("amplification"),
+    ]
+
     def __init__(self, fft_size, fft_window_size, sample_rate, size, position, color=(255,0,0), window_type="boxcar"):
         Graph.__init__(self, size, position, color)
 
@@ -34,8 +47,8 @@ class FFTGraph(Graph):
                                           # and the length of the transformed axis of the output is therefore n/2+1
         self.beans = 1 #beans
         self.ffted_data = [0] * self.x_axis_len
-        self.window_type = window_type
-        self.window = scipy.signal.get_window(self.window_type, self._fft_window_size)
+        self._window_type = window_type
+        self.window = scipy.signal.get_window(window_type, self._fft_window_size)
         self._color = color
         self._amplification = 1
         self.log = False
@@ -71,21 +84,19 @@ class FFTGraph(Graph):
         self._fft_size = fft_size
         self.x_axis_len = (fft_size/2+1)
         self.samples = CircularBuffer(self._fft_window_size, 0.)
-        self._vertex_list.resize(self.x_axis_len)
+        self.line_strip.resize(self.x_axis_len)
         self.regenerate_graph()
 
     def set_fft_window_size(self, fft_window_size):
         self._fft_window_size = fft_window_size
-        self.window = scipy.signal.get_window(self.window_type, self._fft_window_size)
+        self.window = scipy.signal.get_window(self._window_type, self._fft_window_size)
         self.samples = CircularBuffer(self._fft_window_size, 0.)
         self.regenerate_graph()
 
     def set_window_type(self, window_type):
-        self.window = scipy.signal.get_window(self.window_type, self._fft_window_size)
+        self._window_type = window_type
+        self.window = scipy.signal.get_window(window_type, self._fft_window_size)
         self.regenerate_graph()
-
-    def get_amplification(self):
-        return self._amplification
 
     def set_amplification(self, amplification):
         self._amplification = amplification
@@ -120,6 +131,7 @@ class FFTGraph(Graph):
         if need_to_do_FFT:
             self.regenerate_graph()
 
-    amplification = property(get_amplification, set_amplification)
+    amplification = property(lambda self: self._amplification, set_amplification)
     fft_size = property(lambda self: self._fft_size, set_fft_size)
     fft_window_size = property(lambda self: self._fft_window_size, set_fft_window_size)
+    window_type = property(lambda self: self._window_type, set_window_type)

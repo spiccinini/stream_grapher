@@ -25,7 +25,7 @@ multiple_widget = QGLDrawer(MultipleStreamGraph(n_graphs=2, n_samples=300, size=
 scrollable_widget = QGLDrawerHScroll(BrowsableStreamGraph(n_samples=300, size=(2, 2),
                                                           position=(-1, -1), color=(255,205,205)))
 
-fft_widget = QGLDrawer(FFTGraph(fft_size=1024, fft_window_size=128,
+fft_widget = Widget(FFTGraph(fft_size=1024, fft_window_size=128,
                                 sample_rate=sample_generator.sample_rate,
                                  size=(2, 2), position=(-1, -1), color=(205,24,57),
                                  window_type="boxcar"))

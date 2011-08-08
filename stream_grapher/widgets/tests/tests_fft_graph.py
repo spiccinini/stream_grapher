@@ -21,6 +21,7 @@ import numpy as np
 
 from stream_grapher.widgets.fft_graph import FFTGraph
 
+
 class TestFFTGraph(unittest.TestCase):
     def setUp(self):
         self.test_data = np.arange(10)
@@ -33,6 +34,19 @@ class TestFFTGraph(unittest.TestCase):
     def test_add_samples(self):
         self.graph.add_samples([50, 50, 50])
         self.graph.add_samples([50, 50, 50]*100)
+
+    def test_set_fft_size(self):
+        self.graph.fft_size = 2048
+        self.assertEqual(self.graph.fft_size, 2048)
+
+    def test_set_window_type(self):
+        self.graph.window_type = "hamming"
+        self.assertEqual(self.graph.window_type, "hamming")
+
+        self.graph.window_type = "boxcar"
+        self.assertEqual(self.graph.window[0], 1.0)
+        self.assertEqual(self.graph.window[-1], 1.0)
+
 
 if __name__ == '__main__':
     unittest.main()
