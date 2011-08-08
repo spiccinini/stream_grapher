@@ -28,7 +28,7 @@ class StreamGraph(Graph):
         ColorControl("color"),
         FloatControl("v_position", "v_pos", "vertical position"),
         FloatControl("values_per_v_division", "/div", "values per vertical division"),
-        IntControl("samples_per_h_division", "samples/div", "samples per division"),
+        FloatControl("samples_per_h_division", "samples/div", "samples per division"),
     ]
 
     def __init__(self, n_samples, size, position, color=(255,255,255)):
