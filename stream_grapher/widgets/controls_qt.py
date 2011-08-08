@@ -17,7 +17,7 @@
 
 from PyQt4 import QtGui
 
-from controls import ColorControl
+from controls import ColorControl, FloatControl, IntControl
 
 class ControlWidget(QtGui.QWidget):
     def __init__(self, graph, control, parent=None):
@@ -58,14 +58,57 @@ class ColorControlWidget(ControlWidget):
 
     def on_value_changed(self, value):
         self.setStyleSheet(self.style % value)
+        setattr(self.graph, self.control.name, value)
+
+    def value_from_graph(self):
+        value = getattr(self.graph, self.control.name)
+        self.setStyleSheet(self.style % value)
+
+class FloatControlWidget(ControlWidget):
+    def __init__(self, graph, control, parent=None):
+        ControlWidget.__init__(self, graph, control, parent)
+
+        self.widget = QtGui.QDoubleSpinBox()
+        self.widget.setMaximum(1000)
+        self.widget.setMinimum(-1000)
+        self.setLayout(QtGui.QHBoxLayout())
+        self.layout().addWidget(self.widget)
+
+        self.widget.valueChanged.connect(self.on_value_changed)
+
+        self.value_from_graph()
+
+    def on_value_changed(self, value):
         getattr(self.graph, "set_" + self.control.name)(value)
 
     def value_from_graph(self):
-        value = getattr(self.graph, "get_" + self.control.name)()
-        self.setStyleSheet(self.style % value)
+        value = getattr(self.graph, self.control.name)
+        self.widget.setValue(value)
 
+class IntControlWidget(ControlWidget):
+    def __init__(self, graph, control, parent=None):
+        ControlWidget.__init__(self, graph, control, parent)
 
+        self.widget = QtGui.QSpinBox()
+        self.widget.setMaximum(1000)
+        self.widget.setMinimum(-1000)
+        self.setLayout(QtGui.QHBoxLayout())
+        self.layout().addWidget(self.widget)
+
+        self.widget.valueChanged.connect(self.on_value_changed)
+
+        self.value_from_graph()
+
+    def on_value_changed(self, value):
+        getattr(self.graph, "set_" + self.control.name)(value)
+
+    def value_from_graph(self):
+        value = getattr(self.graph, self.control.name)
+        self.widget.setValue(value)
 
 control_map = {
     ColorControl: ColorControlWidget,
+    FloatControl: FloatControlWidget,
+    IntControl: IntControlWidget,
 }
+

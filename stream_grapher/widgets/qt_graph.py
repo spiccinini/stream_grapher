@@ -74,24 +74,26 @@ class Widget(QtGui.QWidget):
         self.config_dialog = QtGui.QDialog()
         self.controls = QtGui.QWidget()
         self.controls.setLayout(QtGui.QFormLayout())
+        if hasattr(graph, "controls"):
+            for control in graph.controls:
+                ctrl_widget_cls = control_map[control.__class__]
+                self.controls.layout().addRow(QtGui.QLabel(control.name.capitalize()),
+                                              ctrl_widget_cls(graph, control))
 
-        for control in graph.controls:
-            ctrl_widget_cls = control_map[control.__class__]
-            self.controls.layout().addRow(QtGui.QLabel(control.name.capitalize()),
-                                          ctrl_widget_cls(graph, control))
+            self.config_dialog.setLayout(QtGui.QVBoxLayout())
+            self.config_dialog.layout().addWidget(self.controls)
 
-        self.config_dialog.setLayout(QtGui.QVBoxLayout())
-        self.config_dialog.layout().addWidget(self.controls)
+            self.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+
+            configure_action = QtGui.QAction("Configure widget", self)
+            configure_action.triggered.connect(lambda : self.config_dialog.show())
+            self.addAction(configure_action)
 
         layout = QtGui.QHBoxLayout()
         layout.addWidget(self.gldrawer)
         self.setLayout(layout)
 
-        self.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
 
-        configure_action = QtGui.QAction("Configure widget", self)
-        configure_action.triggered.connect(lambda : self.config_dialog.show())
-        self.addAction(configure_action)
 
     def update(self):
         self.gldrawer.updateGL()
