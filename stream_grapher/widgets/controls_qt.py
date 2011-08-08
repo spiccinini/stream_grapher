@@ -17,7 +17,7 @@
 
 from PyQt4 import QtGui
 
-from controls import ColorControl, FloatControl, IntControl
+from controls import ColorControl, FloatControl, IntControl, ChoicesControl
 
 class ControlWidget(QtGui.QWidget):
     def __init__(self, graph, control, parent=None):
@@ -106,9 +106,35 @@ class IntControlWidget(ControlWidget):
         value = getattr(self.graph, self.control.name)
         self.widget.setValue(value)
 
+class ChoicesControlWidget(ControlWidget):
+
+    def __init__(self, graph, control, parent=None):
+        ControlWidget.__init__(self, graph, control, parent)
+
+        self.widget = QtGui.QComboBox()
+        for choice in control.choices:
+            self.widget.addItem(choice, choice)
+
+        self.setLayout(QtGui.QHBoxLayout())
+        self.layout().addWidget(self.widget)
+
+        self.widget.currentIndexChanged.connect(self.on_value_changed)
+
+        self.value_from_graph()
+
+    def on_value_changed(self, value):
+        value = str(self.widget.currentText())
+        getattr(self.graph, "set_" + self.control.name)(value)
+
+    def value_from_graph(self):
+        value = getattr(self.graph, self.control.name)
+        self.widget.setCurrentIndex(self.widget.findData(value))
+
+
 control_map = {
     ColorControl: ColorControlWidget,
     FloatControl: FloatControlWidget,
     IntControl: IntControlWidget,
+    ChoicesControl: ChoicesControlWidget,
 }
 
