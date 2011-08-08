@@ -39,17 +39,17 @@ class StreamGraph(Graph):
         self.actual_sample_index = 0
         self._color = self.color
         self._amplification = 1
-        self._v_position = 0.5 # 0 bottom, 1 top
+        self._v_position = 0 # -1 bottom, 1 top
         vertexs = self._vertex_list_from_samples(self.samples)
         self.line_strip = DrawableLineStrip(vertexs.astype("f"))
 
         self.grid = Grid(h_lines=3, v_lines=3, size=size, position=position)
 
-        self._samples_per_h_division = int(self._n_samples / float(self.grid.h_lines))
+        self._samples_per_h_division = self._n_samples / float(self.grid.h_lines)
         #self.samples_per_h_division_label = pyglet.text.Label(str(self.samples_per_h_division)+ "/div",
         #                  font_size=12, x=size[0]/2.0 + position[0], y=position[1]- 10, anchor_x='center', anchor_y='center')
 
-        self._values_per_v_division = int(self.grid.v_sep / float(self._amplification))
+        self._values_per_v_division = self.grid.v_sep / float(self._amplification)
         #self.values_per_v_division_label = pyglet.text.Label(str(self.values_per_v_division)+"/div",
         #                  font_size=12, x=position[0]-40, y=position[1]+self.heigth/2.0, anchor_x='center', anchor_y='center')
 
@@ -59,7 +59,8 @@ class StreamGraph(Graph):
         self.grid.draw()
         gl.glPushMatrix()
         gl.glColor3ub(*self._color)
-        gl.glTranslatef(self.position[0], self.position[1]+(self.heigth * self.v_position), 0)
+        gl.glTranslatef(self.position[0],
+                        self.position[1] + (self.heigth / 2. * (1 + self.v_position)), 0)
         self.line_strip.draw()
         gl.glPopMatrix()
 
@@ -97,13 +98,13 @@ class StreamGraph(Graph):
         self._regenerate_vertex_list()
         self.set_color(self._color)
         self.actual_sample_index = min(self.actual_sample_index, n_samples-1)
-        self._samples_per_h_division = int(self._n_samples / float(self.grid.h_lines))
+        self._samples_per_h_division = self._n_samples / float(self.grid.h_lines)
         #self.samples_per_h_division_label.text  = str(self.samples_per_h_division)+"/div"
 
     def set_amplification(self, amplification):
         self._amplification = amplification
         self._regenerate_vertex_list()
-        self._values_per_v_division = int(self.grid.v_sep / float(self._amplification))
+        self._values_per_v_division = self.grid.v_sep / float(self._amplification)
         #self.values_per_v_division_label.text = str(self.values_per_v_division)+"/div"
 
     def set_samples_per_h_division(self, samples_per_div):
