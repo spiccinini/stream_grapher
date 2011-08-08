@@ -19,9 +19,13 @@ from backend import Backend
 import threading
 import Queue
 import time
+import math
 
 class MathGenerator(object):
-    def __init__(self):
+    def __init__(self, freq, sample_rate):
+        self.freq = freq
+        self.sample_rate = sample_rate
+        self.t = 0
         self.samples = []
 
     def get_samples(self, n):
@@ -35,46 +39,53 @@ class MathGenerator(object):
         raise NotImplementedError
 
 class CubicGenerator(MathGenerator):
-    def __init__(self):
-        MathGenerator.__init__(self)
 
     def gen_samples(self):
         self.samples.extend([t**3/4.0 for t in range(-10, 10)])
 
-class MathWorker(threading.Thread):
-    def __init__(self, generators, out_queue, sleep):
-        threading.Thread.__init__(self)
-        self.setDaemon(True)
-        self.out_queue = out_queue
-        self.sleep = sleep
-        self.generators = generators
+class SineGenerator(MathGenerator):
 
-    def run(self):
-        while True:
-            
-            self.out_queue.put([generator.get_samples(1)[0] for generator in self.generators])
-            time.sleep(self.sleep)
+    def get_samples(self, n):
+        samples = []
+        for i in range(n):
+            samples.append(math.sin(2*3.14* self.freq * self.t))
+            self.t += 1/float(self.sample_rate)
+        return samples
+
+
 
 class Math(Backend):
-    def __init__(self, ports, sample_rate):
+
+    generator = None
+
+    def __init__(self, ports, freq, sample_rate):
         Backend.__init__(self, ports, sample_rate=sample_rate)
-        sleep = 1./sample_rate
-        self.out_queue = Queue.Queue()
-        self.generator = CubicGenerator()
-        self.worker = MathWorker([CubicGenerator() for x in range(ports)], self.out_queue, sleep)
-        self.worker.start()
+        self.generators = [self.generator(freq, sample_rate) for x in range(ports)]
+        self.last_time = time.time()
+
+    def start(self):
+        self.last_time = time.time()
 
     def get_remaining_samples(self):
-        samples = []
-        while True:
-            try:
-                samples.append(self.out_queue.get_nowait())
-            except Queue.Empty:
-                return samples
+        now = time.time()
+        elapsed = now - self.last_time
+        samples_needed = int(elapsed * self.sample_rate)
+        if samples_needed > 0:
+            self.last_time = now
+
+        return [generator.get_samples(samples_needed) for generator in self.generators]
+
+class Sine(Math):
+
+    generator = SineGenerator
+
+class Cubic(Math):
+
+    generator = CubicGenerator
 
 
 if __name__ == "__main__":
-    backend = Math(ports=5, sample_rate=30)
+    backend = Cubic(ports=5, freq=1, sample_rate=30)
 
     while 1:
         time.sleep(0.1)
