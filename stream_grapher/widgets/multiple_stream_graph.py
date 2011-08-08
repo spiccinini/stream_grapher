@@ -60,8 +60,9 @@ class MultipleStreamGraph(object):
 
         self.samples = _SequenceView(sample_getter, sample_setter)
 
-        spacing = 1 / float(n_graphs+1)
-        spacings = [spacing*n for n in range(1, n_graphs+1)][::-1]
+        spacing = 2. / float(n_graphs+1)
+        spacings = [spacing*n -1 for n in range(1, n_graphs+1)][::-1]
+
         for n, graph in enumerate(self.stream_graphs):
             graph.v_position =  spacings[n]
 
@@ -82,10 +83,12 @@ class MultipleStreamGraph(object):
                                            display_name="Port %d V postion" % port)
             self.controls.append(("Port %d" % port, [color_ctrl, v_position_ctrl]))
 
-            self._graphs_controls[color_name] = (lambda : graph.color,
-                                                 graph.set_color)
-            self._graphs_controls[v_position_name] = (lambda :graph.v_position,
-                                                      graph.set_v_position)
+            def f(graph):
+                self._graphs_controls[color_name] = (lambda : graph.color,
+                                                     graph.set_color)
+                self._graphs_controls[v_position_name] = (lambda :graph.v_position,
+                                                          graph.set_v_position)
+            f(graph)
 
     def draw(self):
         for graph in self.stream_graphs:
