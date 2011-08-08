@@ -68,8 +68,8 @@ class MultipleStreamGraph(object):
         self._samples_per_h_division = self.stream_graphs[0].samples_per_h_division
         self._values_per_v_division = self.stream_graphs[0].values_per_v_division
 
+        # Build controls dinamicaly
         self.controls = self.controls[:]
-
         self._graphs_controls = {}
 
         for i, graph in enumerate(self.stream_graphs):
@@ -123,7 +123,6 @@ class MultipleStreamGraph(object):
             graph.values_per_v_division = value
 
     def __getattr__(self, attr):
-        print attr
         if attr in self._graphs_controls:
             return self._graphs_controls[attr][0]()
         else:
