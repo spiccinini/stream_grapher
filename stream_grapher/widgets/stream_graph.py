@@ -100,35 +100,20 @@ class StreamGraph(Graph):
         self._samples_per_h_division = int(self._n_samples / float(self.grid.h_lines))
         #self.samples_per_h_division_label.text  = str(self.samples_per_h_division)+"/div"
 
-    def get_amplification(self):
-        return self._amplification
-
     def set_amplification(self, amplification):
         self._amplification = amplification
         self._regenerate_vertex_list()
         self._values_per_v_division = int(self.grid.v_sep / float(self._amplification))
         #self.values_per_v_division_label.text = str(self.values_per_v_division)+"/div"
 
-    def get_samples_per_h_division(self):
-        return self._samples_per_h_division
-
     def set_samples_per_h_division(self, samples_per_div):
         self.set_n_samples(int(samples_per_div * self.grid.h_lines))
-
-    def get_values_per_v_division(self):
-        return self._values_per_v_division
 
     def set_values_per_v_division(self, values_per_div):
         self.set_amplification(self.grid.v_sep / float(values_per_div))
 
-    def get_color(self):
-        return self._color
-
     def set_color(self, color):
         self._color = color
-
-    def get_v_position(self):
-        return self._v_position
 
     def set_v_position(self, v_position):
         self._v_position = v_position
@@ -150,9 +135,9 @@ class StreamGraph(Graph):
         return vertex_list
 
     n_samples = property(lambda self: self._n_samples, set_n_samples)
-    amplification = property(get_amplification, set_amplification)
-    samples_per_h_division = property(get_samples_per_h_division, set_samples_per_h_division)
-    values_per_v_division = property(get_values_per_v_division, set_values_per_v_division)
-    v_position = property(get_v_position, set_v_position)
-    color = property(get_color, set_color)
+    amplification = property(lambda self: self._amplification, set_amplification)
+    samples_per_h_division = property(lambda self:self._samples_per_h_division, set_samples_per_h_division)
+    values_per_v_division = property(lambda self: self._values_per_v_division, set_values_per_v_division)
+    v_position = property(lambda self:self._v_position, set_v_position)
+    color = property(lambda self:self._color, set_color)
 
