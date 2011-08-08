@@ -16,6 +16,9 @@ If you want to use it with some hardware you have that is plugged in some way
 to the PC, like serial COM port, USB, Parallel, etc, you must write your own
 `custom backend`_.
 
+.. image:: images/stream_grapher_capture.png
+    :scale: 50 %
+
 Backends
 --------
 
@@ -35,6 +38,17 @@ Widgets
 - BrowsableStreamWidget: It's a widget that let you move in the x axis along
   all the signal.
 - FFTWidget: Draws the FFT of the input stream.
+
+Download
+========
+
+The code repository is hosted on bitbucket: https://bitbucket.org/san/stream_grapher/
+
+To get it just run:
+
+.. code-block:: bash
+
+    $ hg clone https://bitbucket.org/san/stream_grapher
 
 Dependencies
 ============
