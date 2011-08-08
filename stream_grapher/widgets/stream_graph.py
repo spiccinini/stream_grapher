@@ -21,14 +21,14 @@ from OpenGL import GL as gl
 from stream_grapher.circular_buffers import CircularBuffer
 from graph import Graph, DrawableLineStrip
 from grid import Grid
-from controls import ColorControl, FloatControl
+from controls import ColorControl, FloatControl, IntControl
 
 class StreamGraph(Graph):
     controls = [
         ColorControl("color"),
-        #FloatControl("v_position", "v_pos", "vertical position"),
-        #FloatControl("values_per_v_division", "/div", "values per vertical division"),
-        #FloatControl("samples_per_h_division", "samples/div", "samples per division"),
+        FloatControl("v_position", "v_pos", "vertical position"),
+        FloatControl("values_per_v_division", "/div", "values per vertical division"),
+        IntControl("samples_per_h_division", "samples/div", "samples per division"),
     ]
 
     def __init__(self, n_samples, size, position, color=(255,255,255)):
@@ -37,7 +37,7 @@ class StreamGraph(Graph):
 
         self.samples = CircularBuffer(n_samples, 0.) #[0]*n_samples#
         self.actual_sample_index = 0
-        self._color = color
+        self._color = self.color
         self._amplification = 1
         self.v_position = 0.5 # 0 bottom, 1 top
         vertexs = self._vertex_list_from_samples(self.samples)
@@ -53,7 +53,6 @@ class StreamGraph(Graph):
         #self.values_per_v_division_label = pyglet.text.Label(str(self.values_per_v_division)+"/div",
         #                  font_size=12, x=position[0]-40, y=position[1]+self.heigth/2.0, anchor_x='center', anchor_y='center')
 
-        self.color = StreamGraph.color_property
 
     def draw(self):
         "Draw the graph"
@@ -108,7 +107,7 @@ class StreamGraph(Graph):
         self._amplification = amplification
         self._regenerate_vertex_list()
         self.values_per_v_division = int(self.grid.v_sep / float(self._amplification))
-        self.values_per_v_division_label.text = str(self.values_per_v_division)+"/div"
+        #self.values_per_v_division_label.text = str(self.values_per_v_division)+"/div"
 
     def set_values_per_v_division(self, values_per_div):
         self.set_amplification(self.grid.v_sep / float(values_per_div))
@@ -143,6 +142,6 @@ class StreamGraph(Graph):
 
     amplification = property(get_amplification, set_amplification)
 
-    color_property = property(get_color, set_color)
+    color = property(get_color, set_color)
 
     n_samples = property(lambda self: self._n_samples, set_n_samples)
