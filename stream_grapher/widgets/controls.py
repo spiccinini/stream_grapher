@@ -15,24 +15,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
 
-from PyQt4 import QtGui
+class Control(object):
+    def __init__(self, name, display_name=None, verbose_name=None):
+        self.name = name
+        self.display_name = display_name
+        self.verbose_name = verbose_name
 
-from stream_grapher import main
 
-if __name__ == "__main__":
+class ColorControl(Control):
+    pass
 
-    if len(sys.argv) < 2:
-        print "Usage: ./stream_grapher.py config_file.py\n"
-        print "Take a look to the example_configs directory for inspiration."
-        sys.exit(1)
-    else:
-        config_filename = sys.argv[1]
 
-    app = QtGui.QApplication(sys.argv)
-    window = main.Main(config_filename=config_filename)
-    window.show()
-    # It's exec_ because exec is a reserved word in Python
-    sys.exit(app.exec_())
+class FloatControl(Control):
+    pref_types = ("slider", "text_input")
+
+    def __init__(self, name, pref_type="slider", *args, **kwargs):
+
+        super(FloatControl, self).__init__(name, *args, **kwargs)
+
+
+class IntControl(Control):
+    pass
+
+
+class ChoicesControl(Control):
+
+    def __init__(self, name, choices, *args, **kwargs):
+
+        super(ChoicesControl, self).__init__(name, *args, **kwargs)
+        self.choices = choices

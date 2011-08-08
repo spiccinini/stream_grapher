@@ -15,24 +15,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import sys
+import unittest
+from PyQt4.QtGui import QApplication
+from PyQt4.QtTest import QTest
+from PyQt4.QtCore import Qt
 
-from PyQt4 import QtGui
+from stream_grapher.widgets.qt_graph import Widget
+from stream_grapher.widgets.stream_graph import StreamGraph
 
-from stream_grapher import main
+
+# For more details on pyqt testing look https://voom.kilnhg.com/Project/2/Make-Stuff-Happen
+
+class WidgetTest(unittest.TestCase):
+
+    def setUp(self):
+        '''Create the GUI'''
+        self.app = QApplication(sys.argv)
+
+    def test_stream_widget(self):
+        graph = StreamGraph(n_samples=300, size=(1,1), position=(-1,-1), color=(255, 0, 255))
+        widget = Widget(graph)
+
 
 if __name__ == "__main__":
-
-    if len(sys.argv) < 2:
-        print "Usage: ./stream_grapher.py config_file.py\n"
-        print "Take a look to the example_configs directory for inspiration."
-        sys.exit(1)
-    else:
-        config_filename = sys.argv[1]
-
-    app = QtGui.QApplication(sys.argv)
-    window = main.Main(config_filename=config_filename)
-    window.show()
-    # It's exec_ because exec is a reserved word in Python
-    sys.exit(app.exec_())
+    unittest.main()
