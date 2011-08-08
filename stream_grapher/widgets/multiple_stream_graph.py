@@ -18,8 +18,15 @@
 import numpy as np
 
 from stream_graph import StreamGraph
+from controls import ColorControl, FloatControl, IntControl
+
 
 class MultipleStreamGraph(object):
+
+    controls = [
+        FloatControl("values_per_v_division", "/div", "values per vertical division"),
+        FloatControl("samples_per_h_division", "samples/div", "samples per division"),
+    ]
 
     def __init__(self, n_graphs, n_samples, size, position, colors):
         self.n_graphs = n_graphs
@@ -58,6 +65,28 @@ class MultipleStreamGraph(object):
         for n, graph in enumerate(self.stream_graphs):
             graph.v_position =  spacings[n]
 
+        self._samples_per_h_division = self.stream_graphs[0].samples_per_h_division
+        self._values_per_v_division = self.stream_graphs[0].values_per_v_division
+
+        self.controls = self.controls[:]
+
+        self._graphs_controls = {}
+
+        for i, graph in enumerate(self.stream_graphs):
+            port = i+1
+            color_name = "port_%d_color" %  port
+            v_position_name = "port_%d_v_position" % port
+            color_ctrl = ColorControl(color_name,
+                                      display_name="Port %d color" % port)
+            v_position_ctrl = FloatControl(v_position_name,
+                                           display_name="Port %d V postion" % port)
+            self.controls.append(("Port %d" % port, [color_ctrl, v_position_ctrl]))
+
+            self._graphs_controls[color_name] = (lambda : graph.color,
+                                                 graph.set_color)
+            self._graphs_controls[v_position_name] = (lambda :graph.v_position,
+                                                      graph.set_v_position)
+
     def draw(self):
         for graph in self.stream_graphs:
             graph.draw()
@@ -82,3 +111,33 @@ class MultipleStreamGraph(object):
         for i, graph in enumerate(self.stream_graphs):
             samples[i] = graph.samples[:]
         return samples.transpose()
+
+    def set_samples_per_h_division(self, value):
+        self._samples_per_h_division = value
+        for graph in self.stream_graphs:
+            graph.samples_per_h_division = value
+
+    def set_values_per_v_division(self, value):
+        self._values_per_v_division = value
+        for graph in self.stream_graphs:
+            graph.values_per_v_division = value
+
+    def __getattr__(self, attr):
+        print attr
+        if attr in self._graphs_controls:
+            return self._graphs_controls[attr][0]()
+        else:
+            raise AttributeError, attr
+
+    def __setattr__(self, attr, value):
+        if attr == "_graphs_controls":
+            object.__setattr__(self, attr, value)
+        elif attr.startswith("port_"):
+            self._graphs_controls[attr][1](value)
+        else:
+            object.__setattr__(self, attr, value)
+
+    samples_per_h_division = property(lambda self: self._samples_per_h_division,
+                                      set_samples_per_h_division)
+    values_per_v_division = property(lambda self: self._values_per_v_division,
+                                      set_values_per_v_division)

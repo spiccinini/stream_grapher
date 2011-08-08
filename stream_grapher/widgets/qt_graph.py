@@ -77,14 +77,30 @@ class Widget(QtGui.QWidget):
         uic.loadUi(uifile, self.config_dialog)
 
         dialog_layout = self.config_dialog.groupBox.layout()
+
+        def build_control(control, graph):
+            ctrl_widget_cls = control_map[control.__class__]
+            ctrl_widget = ctrl_widget_cls(graph, control)
+            return ctrl_widget
+
         if hasattr(graph, "controls"):
             for control in graph.controls:
-                ctrl_widget_cls = control_map[control.__class__]
-                dialog_layout.addRow(QtGui.QLabel(control.name.capitalize()),
-                                     ctrl_widget_cls(graph, control))
-
-            #self.config_dialog.setLayout(QtGui.QVBoxLayout())
-            #self.config_dialog.layout().addWidget(self.controls)
+                # If control is a tuple is because is a group of controls
+                # so we put them inside a new QGroupBox.
+                if isinstance(control, tuple):
+                    group_name = control[0]
+                    group = QtGui.QGroupBox(group_name)
+                    layout_size = self.config_dialog.layout().count()
+                    self.config_dialog.layout().insertWidget(layout_size-1, group)
+                    group.setLayout(QtGui.QFormLayout())
+                    for control in control[1]:
+                        ctrl_widget = build_control(control, graph)
+                        group.layout().addRow(QtGui.QLabel(ctrl_widget.name.capitalize()),
+                                              ctrl_widget)
+                else:
+                    ctrl_widget = build_control(control, graph)
+                    dialog_layout.addRow(QtGui.QLabel(ctrl_widget.name.capitalize()),
+                                         ctrl_widget)
 
             self.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
 

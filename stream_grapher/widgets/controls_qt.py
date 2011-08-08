@@ -31,7 +31,7 @@ class ControlWidget(QtGui.QWidget):
             self.setToolTip(control.verbose_name)
 
     def on_value_changed(self, value):
-        raise NotImplemented
+        setattr(self.graph, self.control.name, value)
 
     def value_from_graph(self):
         raise NotImplemented
@@ -64,6 +64,7 @@ class ColorControlWidget(ControlWidget):
         value = getattr(self.graph, self.control.name)
         self.setStyleSheet(self.style % value)
 
+
 class FloatControlWidget(ControlWidget):
     def __init__(self, graph, control, parent=None):
         ControlWidget.__init__(self, graph, control, parent)
@@ -78,19 +79,17 @@ class FloatControlWidget(ControlWidget):
 
         self.value_from_graph()
 
-    def on_value_changed(self, value):
-        getattr(self.graph, "set_" + self.control.name)(value)
-
     def value_from_graph(self):
         value = getattr(self.graph, self.control.name)
         self.widget.setValue(value)
+
 
 class IntControlWidget(ControlWidget):
     def __init__(self, graph, control, parent=None):
         ControlWidget.__init__(self, graph, control, parent)
 
         self.widget = QtGui.QSpinBox()
-        self.widget.setMaximum(1000)
+        self.widget.setMaximum(10000)
         self.widget.setMinimum(-1000)
         self.setLayout(QtGui.QHBoxLayout())
         self.layout().addWidget(self.widget)
@@ -99,12 +98,10 @@ class IntControlWidget(ControlWidget):
 
         self.value_from_graph()
 
-    def on_value_changed(self, value):
-        getattr(self.graph, "set_" + self.control.name)(value)
-
     def value_from_graph(self):
         value = getattr(self.graph, self.control.name)
         self.widget.setValue(value)
+
 
 class ChoicesControlWidget(ControlWidget):
 
@@ -124,7 +121,7 @@ class ChoicesControlWidget(ControlWidget):
 
     def on_value_changed(self, value):
         value = str(self.widget.currentText())
-        getattr(self.graph, "set_" + self.control.name)(value)
+        setattr(self.graph, self.control.name, value)
 
     def value_from_graph(self):
         value = getattr(self.graph, self.control.name)

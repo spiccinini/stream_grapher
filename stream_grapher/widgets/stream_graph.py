@@ -26,7 +26,7 @@ from controls import ColorControl, FloatControl, IntControl
 class StreamGraph(Graph):
     controls = [
         ColorControl("color"),
-        FloatControl("v_position", "v_pos", "vertical position"),
+        FloatControl("v_position", "V pos", "vertical position"),
         FloatControl("values_per_v_division", "/div", "values per vertical division"),
         FloatControl("samples_per_h_division", "samples/div", "samples per division"),
     ]

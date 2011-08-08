@@ -16,11 +16,11 @@ sample_generator  = Brownian(ports=3, sample_rate=100)
 backends.append(sample_generator)
 
 simple_widget = Widget(StreamGraph(n_samples=300, size=(2, 2), position=(-1, -1),
-                                      color=(255,205,205)))
+                                   color=(255,205,205)))
 
-multiple_widget = QGLDrawer(MultipleStreamGraph(n_graphs=2, n_samples=300, size=(2, 2),
-                                                position=(-1, -1),
-                                                colors=[(135,25,255*i) for i in range(2)]))
+multiple_widget = Widget(MultipleStreamGraph(n_graphs=2, n_samples=300, size=(2, 2),
+                                             position=(-1, -1),
+                                             colors=[(135,25,255*i) for i in range(2)]))
 
 scrollable_widget = QGLDrawerHScroll(BrowsableStreamGraph(n_samples=300, size=(2, 2),
                                                           position=(-1, -1), color=(255,205,205)))
