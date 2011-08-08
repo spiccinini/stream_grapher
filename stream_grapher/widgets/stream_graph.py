@@ -39,17 +39,17 @@ class StreamGraph(Graph):
         self.actual_sample_index = 0
         self._color = self.color
         self._amplification = 1
-        self.v_position = 0.5 # 0 bottom, 1 top
+        self._v_position = 0.5 # 0 bottom, 1 top
         vertexs = self._vertex_list_from_samples(self.samples)
         self.line_strip = DrawableLineStrip(vertexs.astype("f"))
 
         self.grid = Grid(h_lines=3, v_lines=3, size=size, position=position)
 
-        self.samples_per_h_division = int(self._n_samples / float(self.grid.h_lines))
+        self._samples_per_h_division = int(self._n_samples / float(self.grid.h_lines))
         #self.samples_per_h_division_label = pyglet.text.Label(str(self.samples_per_h_division)+ "/div",
         #                  font_size=12, x=size[0]/2.0 + position[0], y=position[1]- 10, anchor_x='center', anchor_y='center')
 
-        self.values_per_v_division = int(self.grid.v_sep / float(self._amplification))
+        self._values_per_v_division = int(self.grid.v_sep / float(self._amplification))
         #self.values_per_v_division_label = pyglet.text.Label(str(self.values_per_v_division)+"/div",
         #                  font_size=12, x=position[0]-40, y=position[1]+self.heigth/2.0, anchor_x='center', anchor_y='center')
 
@@ -97,32 +97,41 @@ class StreamGraph(Graph):
         self._regenerate_vertex_list()
         self.set_color(self._color)
         self.actual_sample_index = min(self.actual_sample_index, n_samples-1)
-        #self.samples_per_h_division = int(self._n_samples / float(self.grid.h_lines))
+        self._samples_per_h_division = int(self._n_samples / float(self.grid.h_lines))
         #self.samples_per_h_division_label.text  = str(self.samples_per_h_division)+"/div"
-
-    def set_samples_per_h_division(self, samples_per_div):
-        self.set_n_samples(int(samples_per_div * self.grid.h_lines))
-
-    def set_amplification(self, amplification):
-        self._amplification = amplification
-        self._regenerate_vertex_list()
-        self.values_per_v_division = int(self.grid.v_sep / float(self._amplification))
-        #self.values_per_v_division_label.text = str(self.values_per_v_division)+"/div"
-
-    def set_values_per_v_division(self, values_per_div):
-        self.set_amplification(self.grid.v_sep / float(values_per_div))
 
     def get_amplification(self):
         return self._amplification
 
-    def set_color(self, color):
-        self._color = color
+    def set_amplification(self, amplification):
+        self._amplification = amplification
+        self._regenerate_vertex_list()
+        self._values_per_v_division = int(self.grid.v_sep / float(self._amplification))
+        #self.values_per_v_division_label.text = str(self.values_per_v_division)+"/div"
+
+    def get_samples_per_h_division(self):
+        return self._samples_per_h_division
+
+    def set_samples_per_h_division(self, samples_per_div):
+        self.set_n_samples(int(samples_per_div * self.grid.h_lines))
+
+    def get_values_per_v_division(self):
+        return self._values_per_v_division
+
+    def set_values_per_v_division(self, values_per_div):
+        self.set_amplification(self.grid.v_sep / float(values_per_div))
 
     def get_color(self):
         return self._color
 
+    def set_color(self, color):
+        self._color = color
+
+    def get_v_position(self):
+        return self._v_position
+
     def set_v_position(self, v_position):
-        self.v_position = v_position
+        self._v_position = v_position
         self._regenerate_vertex_list()
 
     def _regenerate_vertex_list(self):
@@ -140,8 +149,10 @@ class StreamGraph(Graph):
         vertex_list = np.column_stack((x_axis, y_axis))
         return vertex_list
 
+    n_samples = property(lambda self: self._n_samples, set_n_samples)
     amplification = property(get_amplification, set_amplification)
-
+    samples_per_h_division = property(get_samples_per_h_division, set_samples_per_h_division)
+    values_per_v_division = property(get_values_per_v_division, set_values_per_v_division)
+    v_position = property(get_v_position, set_v_position)
     color = property(get_color, set_color)
 
-    n_samples = property(lambda self: self._n_samples, set_n_samples)
