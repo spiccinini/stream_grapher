@@ -69,4 +69,4 @@ class Main(QtGui.QMainWindow):
                         connection.out.graph.add_samples(out_samples)
 
         for widget in self.config.widgets:
-            widget.updateGL()
+            widget.update()

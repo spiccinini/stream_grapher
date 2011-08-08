@@ -21,8 +21,16 @@ from OpenGL import GL as gl
 from stream_grapher.circular_buffers import CircularBuffer
 from graph import Graph, DrawableLineStrip
 from grid import Grid
+from controls import ColorControl, FloatControl
 
 class StreamGraph(Graph):
+    controls = [
+        ColorControl("color"),
+        #FloatControl("v_position", "v_pos", "vertical position"),
+        #FloatControl("values_per_v_division", "/div", "values per vertical division"),
+        #FloatControl("samples_per_h_division", "samples/div", "samples per division"),
+    ]
+
     def __init__(self, n_samples, size, position, color=(255,255,255)):
         Graph.__init__(self, size, position, color)
         self._n_samples = n_samples

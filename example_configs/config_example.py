@@ -4,7 +4,7 @@ from stream_grapher.widgets.stream_graph import StreamGraph
 from stream_grapher.widgets.multiple_stream_graph import MultipleStreamGraph
 from stream_grapher.widgets.browsable_stream_graph import BrowsableStreamGraph
 from stream_grapher.widgets.fft_graph import FFTGraph
-from stream_grapher.widgets.qt_graph import QGLDrawer, QGLDrawerHScroll
+from stream_grapher.widgets.qt_graph import QGLDrawer, QGLDrawerHScroll, Widget
 from stream_grapher.connection import PatchBay
 
 backends = []
@@ -15,7 +15,7 @@ sample_generator  = Brownian(ports=3, sample_rate=100)
 
 backends.append(sample_generator)
 
-simple_widget = QGLDrawer(StreamGraph(n_samples=300, size=(2, 2), position=(-1, -1),
+simple_widget = Widget(StreamGraph(n_samples=300, size=(2, 2), position=(-1, -1),
                                       color=(255,205,205)))
 
 multiple_widget = QGLDrawer(MultipleStreamGraph(n_graphs=2, n_samples=300, size=(2, 2),

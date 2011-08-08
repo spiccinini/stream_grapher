@@ -19,6 +19,8 @@ from PyQt4 import QtOpenGL, QtGui, QtCore
 
 from OpenGL import GL as gl
 
+from controls_qt import control_map
+
 class QGLDrawer(QtOpenGL.QGLWidget):
     def __init__(self, graph, parent=None):
         QtOpenGL.QGLWidget.__init__(self, parent)
@@ -44,6 +46,9 @@ class QGLDrawer(QtOpenGL.QGLWidget):
         gl.glEnable(gl.GL_BLEND)
         self.graph.draw()
 
+    def update(self):
+        self.updateGL()
+
 class QGLDrawerHScroll(QtGui.QWidget):
     def __init__(self, graph, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -57,5 +62,27 @@ class QGLDrawerHScroll(QtGui.QWidget):
         vlayout.addWidget(self.h_scroll)
         self.setLayout(vlayout)
 
-    def updateGL(self):
+    def update(self):
+        self.gldrawer.updateGL()
+
+class Widget(QtGui.QWidget):
+    def __init__(self, graph, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.graph = graph
+        self.gldrawer = QGLDrawer(graph)
+
+        self.controls = QtGui.QWidget()
+        self.controls.setLayout(QtGui.QFormLayout())
+
+        for control in graph.controls:
+            ctrl_widget_cls = control_map[control.__class__]
+            self.controls.layout().addRow(QtGui.QLabel(control.name.capitalize()),
+                                          ctrl_widget_cls(graph, control))
+
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(self.controls)
+        layout.addWidget(self.gldrawer)
+        self.setLayout(layout)
+
+    def update(self):
         self.gldrawer.updateGL()
