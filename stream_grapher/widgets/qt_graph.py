@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from PyQt4 import QtOpenGL, QtGui, QtCore
+import os
 
+from PyQt4 import QtOpenGL, QtGui, QtCore, uic
 from OpenGL import GL as gl
 
 from controls_qt import control_map
@@ -72,16 +73,18 @@ class Widget(QtGui.QWidget):
         self.gldrawer = QGLDrawer(graph)
 
         self.config_dialog = QtGui.QDialog()
-        self.controls = QtGui.QWidget()
-        self.controls.setLayout(QtGui.QFormLayout())
+        uifile = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../qtui/config_dialog.ui')
+        uic.loadUi(uifile, self.config_dialog)
+
+        dialog_layout = self.config_dialog.groupBox.layout()
         if hasattr(graph, "controls"):
             for control in graph.controls:
                 ctrl_widget_cls = control_map[control.__class__]
-                self.controls.layout().addRow(QtGui.QLabel(control.name.capitalize()),
-                                              ctrl_widget_cls(graph, control))
+                dialog_layout.addRow(QtGui.QLabel(control.name.capitalize()),
+                                     ctrl_widget_cls(graph, control))
 
-            self.config_dialog.setLayout(QtGui.QVBoxLayout())
-            self.config_dialog.layout().addWidget(self.controls)
+            #self.config_dialog.setLayout(QtGui.QVBoxLayout())
+            #self.config_dialog.layout().addWidget(self.controls)
 
             self.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
 
