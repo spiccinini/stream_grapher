@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
-from stream_widgets import BrowsableStreamWidget
-from connection import PatchBay
+from stream_grapher.widgets.browsable_stream_graph import  BrowsableStreamWidget
+from stream_grapher.connection import PatchBay
 
 DISPLAY = {
     "width": 1000,

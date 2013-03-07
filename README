@@ -16,8 +16,8 @@ If you want to use it with some hardware you have that is plugged in some way
 to the PC, like serial COM port, USB, Parallel, etc, you must write your own
 `custom backend`_.
 
-.. image:: images/stream_grapher_capture.png
-    :scale: 50 %
+.. image:: /images/stream_grapher_capture.png
+    :height: 800 px
 
 Backends
 --------
